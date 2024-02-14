@@ -1,0 +1,28 @@
+/*----------------------------------------------------------------------
+ * 楽譜データの構造体
+ *
+ * typedef struct {
+ *    unsigned short pitch;	// 音階
+ *    unsigned short note;	// 音符長
+ * } MusicScore_t;
+ *
+ * #define  N16     1   // 16分音符
+ * #define  N8      2   //  8分音符
+ * #define  N8x     3   //8.5分音符
+ * #define  N4      4   //  4分音符
+ * #define  N4x     6   //4.5分音符
+ * #define  N2      8   //  2分音符
+ * #define  N2x     12  //2.5分音符
+ * #define  N0      16  //   全音符
+ *
+ * #define  N84     6   // N8 + N4
+ * #define  N83     8   // N8 + N3
+ * #define  N82     10  // N8 + N2
+ * #define  N81     14  // N8 + N1
+ * #define  N80     18  // N8 + N0
+ *----------------------------------------------------------------------*/
+{Do2, N8}, {Re2, N8}, {Mi2, N8}, {Fa2, N8}, {So2, N8}, {Ra2, N8}, {Si2, N8}, {Do3, N8},
+{Do3, N8}, {Re3, N8}, {Mi3, N8}, {Fa3, N8}, {So3, N8}, {Ra3, N8}, {Si3, N8}, {Do4, N8},
+{Do4, N8}, {Re4, N8}, {Mi4, N8}, {Fa4, N8}, {So4, N8}, {Ra4, N8}, {Si4, N8}, {Do5, N8},
+{Do5, N8}, {Re5, N8}, {Mi5, N8}, {Fa5, N8}, {So5, N8}, {Ra5, N8}, {Si5, N8}, {Do6, N8},
+{Do6, N8}, {Re6, N8}, {Mi6, N8}, {Fa6, N8}, {So6, N8}, {Ra6, N8}, {Si6, N8}, {Do7, N8},
