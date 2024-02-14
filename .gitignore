@@ -1,3 +1,38 @@
+._*
+/src/._*
+/inc/._*
+
+# Directories
+/Debug
+/Release
+/backup
+
+# Keil Files
+/src/crp.c
+/src/cr_startup_lpc13xx.c
+/src/usbuser.c
+/src/usbhw.c
+/src/usbdesc.c
+/src/usbcore.c
+/src/cdcuser.c
+
+# Keil Files
+/inc/usbuser.h
+/inc/usbreg.h
+/inc/usbhw.h
+/inc/usbdesc.h
+/inc/usbcore.h
+/inc/usbcfg.h
+/inc/usb.h
+/inc/config.h
+/inc/cdcuser.h
+/inc/cdc.h
+
+# LPCExpresso files
+.cproject
+.project
+.settings
+
 # Prerequisites
 *.d
 
@@ -6,6 +41,7 @@
 *.ko
 *.obj
 *.elf
+*.bin
 
 # Linker output
 *.ilk
