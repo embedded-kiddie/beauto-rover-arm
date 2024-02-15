@@ -1,4 +1,11 @@
-
+/*===============================================================================
+ Name        : type.h
+ Author      : $(author)
+ Version     :
+ Model type  : VS-WRC103LV
+ Copyright   : $(copyright)
+ Description : Standard type definitions
+===============================================================================*/
 #ifndef __TYPE_H__
 #define __TYPE_H__
 

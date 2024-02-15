@@ -34,4 +34,25 @@ typedef struct {
 	short R;
 } IRData_t;
 
+/*----------------------------------------------------------------------
+ * PID制御ゲインの定義
+ *----------------------------------------------------------------------*/
+typedef struct {
+	int KP;
+	int KD;
+	int FORWARD;
+	int TURNING;
+} PID_t;
+
+/*----------------------------------------------------------------------
+ * コースマップの定義
+ *----------------------------------------------------------------------*/
+#define	MAP_EOD		0xffffffff	// End of Data for "count"
+typedef struct {
+	unsigned long	count;
+	int				forward;
+	short			kp;
+	short			kd;
+} CourseMap_t;
+
 #endif // _TRACE_H_

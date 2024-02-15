@@ -203,7 +203,7 @@ void WDT_IRQHandler(void) {
 #ifdef	EXAMPLE
 /*===============================================================================
  * WatchDog Timer の動作確認
- *	- タイムアウト時の振る舞い確認
+ * - タイムアウト時の振る舞を確認する
  *
  *　【WDT_FEED_ON = 0, WDT_RESET_CPU = 0】
  *	・FailHandler() で WDT_START() を実行した場合

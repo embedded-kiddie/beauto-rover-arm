@@ -269,7 +269,7 @@ unsigned int PMU_SLEEP(int mode) {
 #ifdef	EXAMPLE
 /*===============================================================================
  * パワーマネジメントユニットの動作確認
- *	- Active/Sleep/Deep-sleep/Deep Power-down 各モードの動作例
+ * - Active/Sleep/Deep-sleep/Deep Power-down 各モードの動作例
  *
  * 【EXAMPLE1】
  *	TIMER_WAKEUP() によるタイマー割り込みにより一定周期でタスクを起動する
