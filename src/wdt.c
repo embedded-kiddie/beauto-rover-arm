@@ -33,7 +33,9 @@
 #define	WDT_DEBUG		0
 #if		WDT_DEBUG
 #include <stdio.h>
-#include "sci.h"		// for SCI_PRINTF()
+#include "sci.h"
+#else
+#define	SCI_PRINTF(...)
 #endif
 
 /*----------------------------------------------------------------------
@@ -107,9 +109,7 @@ void WDT_FEED_SYSTICK(unsigned long msec) {
 	// CPU main clock
 	mainclock = GetMainClock();
 
-#if	WDT_DEBUG
 	SCI_PRINTF("Main clock frequency = %d\r\n", mainclock);
-#endif
 
 	// SysTick_Config() is defined in  CMSIS_CORE_LPC13xx/inc/core_cm3.h
 	mainclock *= msec / 1000;
@@ -172,9 +172,7 @@ void SysTick_Handler(void)
 {
 	WDT_FEED();
 
-#if	WDT_DEBUG
 	SCI_PRINTF("SysTick_Handler()\r\n");
-#endif
 }
 
 /*----------------------------------------------------------------------
@@ -184,11 +182,9 @@ void WDT_IRQHandler(void) {
 	// 18.7.1 Watchdog Mode register (WDMOD)
 	unsigned long mode = LPC_WDT->MOD;
 
-#if	WDT_DEBUG
 	// 12 = Watchdog interrupt flag + Watchdog time-out flag
 	//  9 = Watchdog interrupt flag + Watchdog enable bit
 	SCI_PRINTF("WDT_IRQHandler WDMOD = %d\r\n", mode);
-#endif
 
 	// Bit 2 (WDTOF) Watchdog time-out flag
 	if (mode & (1<<2)) {
@@ -232,9 +228,7 @@ void WDT_IRQHandler(void) {
  * タイムアウト時の割込みハンドラ WDT_IRQHandler() から呼び出される処理
  *----------------------------------------------------------------------*/
 static void FailHandler(void) {
-#if		WDT_DEBUG
 	SCI_PRINTF("FailHandler\r\n");
-#endif
 
 	LED(LED2);
 	WAIT(250);

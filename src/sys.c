@@ -17,7 +17,9 @@
 #define	SYS_DEBUG		0
 #if		SYS_DEBUG
 #include <stdio.h>
-#include "sci.h"		// for SCI_PRINTF()
+#include "sci.h"
+#else
+#define	SCI_PRINTF(...)
 #endif
 
 #include "type.h"

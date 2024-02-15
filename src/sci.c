@@ -128,8 +128,6 @@ int SCI_SCANF(const char* fmt, ...) {
 
 	switch (*p) {
 	  case 'd':
-		sscanf(buf, fmt, va_arg(arg_ptr, int*));
-		break;
 	  case 'x':
 		sscanf(buf, fmt, va_arg(arg_ptr, int*));
 		break;

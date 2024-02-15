@@ -1,3 +1,4 @@
+# Mac dot-underscore files
 ._*
 /src/._*
 /inc/._*
@@ -29,6 +30,8 @@
 /inc/cdc.h
 
 # LPCExpresso files
+*.inf
+*.launch
 .cproject
 .project
 .settings

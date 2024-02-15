@@ -1,5 +1,5 @@
 /*===============================================================================
- * Name        : sleep.c
+ * Name        : pmu.c
  * Author      : $(author)
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343
@@ -17,7 +17,9 @@
 #define	PMU_DEBUG		0
 #if		PMU_DEBUG
 #include <stdio.h>
-#include "sci.h"		// for SCI_PRINTF()
+#include "sci.h"
+#else
+#define	SCI_PRINTF(...)
 #endif
 
 #include "type.h"
@@ -60,6 +62,9 @@ void WAKEUP_IRQHandler(void) {
 	if (pwmInterval) {
 		TIMER_WAKEUP(pwmInterval, WAKEUP_IRQHandler);
 	}
+
+	// https://github.com/microbuilder/LPC1343CodeBase/blob/master/core/pmu/pmu.c#L101C2-L101C26
+	__asm volatile ("NOP"); // 効果なし
 }
 
 /*----------------------------------------------------------------------
@@ -291,9 +296,7 @@ unsigned int PMU_SLEEP(int mode) {
  * タイマーの割込みハンドラ  TIMER32_1_IRQHandler() から呼び出される関数
  *----------------------------------------------------------------------*/
 static void Wakeup(void) {
-#if		PMU_DEBUG
 	SCI_PRINTF("Wakeup\r\n");
-#endif
 
 	TIMER_WAKEUP(1000, Wakeup);		// 1秒周期でタイマー割り込み発生させる
 }
