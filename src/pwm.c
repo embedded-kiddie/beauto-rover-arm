@@ -16,9 +16,14 @@
 #include "ioport.h"
 
 /*----------------------------------------------------------------------
- * 停止時の出力 （0:フリー、正の整数：ブレーキ）
+ * 停止時の出力 （FALSE:フリー、TRUE：回生ブレーキ）
+ *
+ * 回転方向の出力ポート（PIO0_8, PIO0_9）を両方とも 'H' とすれば、
+ * 原理上は回生ブレーキとなるが、効果は観測されず、また停止し続けた
+ * 場合は僅かながら電力を消費することになるため、FALSE とする。
+ * ただし TRUE とすることで実験可能なコードは残しておくこととする。
  *----------------------------------------------------------------------*/
-#define	STOP_DUTY	0
+#define	STOP_BRAKE	FALSE
 
 /*----------------------------------------------------------------------
  * PWM出力の初期化 - I/Oピン、タイマの設定
@@ -133,7 +138,7 @@ void PWM_OUT(short L, short R) {
 		dir |= (1<<3)|(0<<2);	// 逆転：PIO2_3=H, PIO2_2=L
 	}
 
-#if	STOP_DUTY
+#if	STOP_BRAKE
 	else {
 		dir |= (1<<3)|(1<<2);	// 停止：PIO2_3=H, PIO2_2=H
 	}
@@ -146,7 +151,7 @@ void PWM_OUT(short L, short R) {
 		dir |= (1<<1)|(0<<0);	// 逆転：PIO2_1=H, PIO2_0=L
 	}
 
-#if	STOP_DUTY
+#if	STOP_BRAKE
 	else {
 		dir |= (1<<1)|(1<<0);	// 停止：PIO2_1=H, PIO2_0=H
 	}
@@ -159,8 +164,10 @@ void PWM_OUT(short L, short R) {
 
 	// 15.8.7 Match Registers (TMR16B0MR0, TMR16B1MR0)
 	// モーターに出力値を設定
-	LPC_TMR16B0->MR0 = ~(ABS(R) * 2 + (R ? 1 : STOP_DUTY));
-	LPC_TMR16B1->MR0 = ~(ABS(L) * 2 + (L ? 1 : STOP_DUTY));
+	// MR0 = TC の場合：Duty 0%
+	// MR0 = TC + 1 の場合: Duty 100%
+	LPC_TMR16B0->MR0 = ~(ABS(R) * 2 + (R ? 1 : 0));
+	LPC_TMR16B1->MR0 = ~(ABS(L) * 2 + (L ? 1 : 0));
 }
 
 #ifdef	EXAMPLE
