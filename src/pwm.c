@@ -16,6 +16,13 @@
 #include "ioport.h"
 
 /*----------------------------------------------------------------------
+ * 左右駆動系のバラツキを補正する係数[%]
+ *----------------------------------------------------------------------*/
+#define	PWM_GAIN_RATIO	100		// 百分率
+#define	PWM_GAIN_L		100		// 左駆動系の補正係数
+#define	PWM_GAIN_R		96		// 右駆動系の補正係数
+
+/*----------------------------------------------------------------------
  * 停止時の出力 （FALSE:フリー、TRUE：回生ブレーキ）
  *
  * 回転方向の出力ポート（PIO0_8, PIO0_9）を両方とも 'H' とすれば、
@@ -127,10 +134,6 @@ void PWM_OUT(short L, short R) {
 	// PIO2_0 ～PIO2_3 を 'L' に初期化
 	int dir = LPC_GPIO2->DATA & 0x0ff0;
 
-	// 最小値、最大値で制限
-//	L = MIN(PWM_MAX, MAX(-PWM_MAX, L));
-//	R = MIN(PWM_MAX, MAX(-PWM_MAX, R));
-
 	if (L > 0) {
 		dir |= (0<<3)|(1<<2);	// 正転：PIO2_3=L, PIO2_2=H
 	}
@@ -162,6 +165,14 @@ void PWM_OUT(short L, short R) {
 	// モーター回転方向を指示
 	LPC_GPIO2->DATA = dir;
 
+	// 左右駆動系のバラツキを補正する
+	L = (L * PWM_GAIN_L) / PWM_GAIN_RATIO;
+	R = (R * PWM_GAIN_R) / PWM_GAIN_RATIO;
+
+	// 最小値、最大値で制限
+//	L = MIN(PWM_MAX, MAX(-PWM_MAX, L));
+//	R = MIN(PWM_MAX, MAX(-PWM_MAX, R));
+
 	// 15.8.7 Match Registers (TMR16B0MR0, TMR16B1MR0)
 	// モーターに出力値を設定
 	// MR0 = TC の場合： Duty 0%
@@ -182,18 +193,45 @@ void PWM_OUT(short L, short R) {
 #include "pwm.h"
 
 /*----------------------------------------------------------------------
- * モーターPWM制御の動作例
+ * 動作例1: 直進性を確認し、駆動系のゲインを調整する
  *----------------------------------------------------------------------*/
-void PWM_EXAMPLE(void) {
-	TIMER_INIT();	// WAIT()
-	PORT_INIT();	// SW_STANDBY()
-	PWM_INIT();		// PWM出力の初期化
-
-	SW_STANDBY();	// スイッチが押されるまで待機
-	LED(LED_ON);
+void PWM_EXAMPLE1(void) {
+	unsigned short pwm, delta = PWM_MAX / 200;
 
 	while (1) {
-		short pwm = PWM_MAX / 2; // デューティ比50%
+		// 前進
+		for (pwm = 0; pwm <= PWM_MAX; pwm += delta) {
+			PWM_OUT(pwm, pwm);
+			WAIT(10);
+		}
+
+		// 停止
+		PWM_OUT(0, 0);
+		WAIT(1000);
+
+		// 後退
+		for (pwm = 0; pwm <= PWM_MAX; pwm += delta) {
+			PWM_OUT(-pwm, -pwm);
+			WAIT(10);
+		}
+
+		// 停止
+		PWM_OUT(0, 0);
+		WAIT(1000);
+
+		// スイッチが押されるまで待機
+		while (!SW_CLICK()) { LED_FLUSH(100); }
+		LED(LED_ON);
+	}
+}
+
+/*----------------------------------------------------------------------
+ * 動作例2: 前進 --> 右旋回 --> 左旋回 --> 後退
+ *----------------------------------------------------------------------*/
+void PWM_EXAMPLE2(void) {
+	short pwm = PWM_MAX / 2; // デューティ50%で動作
+
+	while (1) {
 		PWM_OUT(+pwm, +pwm); WAIT(1000); // 前進
 		PWM_OUT(   0,    0); WAIT(1000); // 停止
 
@@ -203,8 +241,35 @@ void PWM_EXAMPLE(void) {
 		PWM_OUT(-pwm, +pwm); WAIT(1000); // 左回転
 		PWM_OUT(   0,    0); WAIT(1000); // 停止
 
-		PWM_OUT(-pwm, -pwm); WAIT(1000); // 後進
+		PWM_OUT(-pwm, -pwm); WAIT(1000); // 後退
 		PWM_OUT(   0,    0); WAIT(1000); // 停止
 	}
 }
+
+/*----------------------------------------------------------------------
+ * モーターPWM制御の動作確認
+ *  1: 直進性を確認し、駆動系のゲインを調整する
+ *  2: 前進 --> 右旋回 --> 左旋回 --> 後退
+ *----------------------------------------------------------------------*/
+void PWM_EXAMPLE(int method) {
+	TIMER_INIT();	// WAIT()
+	PORT_INIT();	// SW_CLICK(), LED()
+	PWM_INIT();		// PWM出力の初期化
+
+	// スイッチが押されるまで待機
+	while (!SW_CLICK()) { LED_FLUSH(100); }
+	LED(LED_ON);
+
+	switch (method) {
+	  case 1:
+		  PWM_EXAMPLE1();
+		break;
+
+	  case 2:
+	  default:
+		  PWM_EXAMPLE2();
+		break;
+	}
+}
+
 #endif // EXAMPLE

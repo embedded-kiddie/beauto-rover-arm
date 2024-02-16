@@ -13,7 +13,7 @@
 #include "pwm.h"
 #include "trace.h"
 
-#define	TRACE_DEBUG		0
+#define	TRACE_DEBUG		1
 #if		TRACE_DEBUG
 #include <stdio.h>
 #include "sci.h"
@@ -138,7 +138,7 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 	// USBケーブルの接続し、通信の成立を確認する
 	while (!SW_CLICK()) { LED_FLUSH(100); }
 	SCI_INIT();		// 通信確立を確認し、
-	SW_STANDBY();	// SW1を押したら出力開始
+	SW_STANDBY();	// スイッチを押したら出力開始
 
 	// 補正係数用パラメータを出力する
 	SCI_PRINTF("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
@@ -164,6 +164,7 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 
 /*----------------------------------------------------------------------
  * ライントレース - 赤外線センサの特性計測
+ *	- TRACE_DEBUG を 1 に設定、計測結果をシリアル通信経由でホストPCに送信する
  *----------------------------------------------------------------------*/
 static void TRACE_RUN0(void) {
 	CalibrateIR_t cal;
@@ -254,6 +255,13 @@ void TRACE_RUN(int method) {
 
 	  case 1:
 		TRACE_RUN1();
+		break;
+
+	  case 2:
+		break;
+
+	  case 3:
+	  default:
 		break;
 	}
 }

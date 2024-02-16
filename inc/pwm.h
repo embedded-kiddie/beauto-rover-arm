@@ -26,7 +26,7 @@ extern void PWM_OUT(short L, short R);
  *	- 電池ボックスをオンにして確認すること
  *	- Vstone社製 Mtr_Run_lv() とはPWM指示値の正負が異なることに注意すること
  *===============================================================================*/
-extern void PWM_EXAMPLE(void);
+extern void PWM_EXAMPLE(int method);
 #endif // EXAMPLE
 
 #endif // _PWM_H_
