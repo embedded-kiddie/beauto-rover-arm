@@ -22,6 +22,13 @@
 #endif
 
 /*----------------------------------------------------------------------
+ * 赤外線センサのキャリブレーション方法
+ *	0: 左右センサの原点位置だけを補正する
+ *	1: 左右センサの出力値がそれぞれ 0 ～ IR_RANGE となるよう正規化する
+ *----------------------------------------------------------------------*/
+#define	CALIBRATION_METHOD	1
+
+/*----------------------------------------------------------------------
  * 車体をライン中心に設置した状態で左右センサ値の差を複数回観測し、
  * 平均化（ノイズ除去）することで、原点までのオフセットを算出する
  *
@@ -62,7 +69,7 @@ static short AdjustCenter(void)
  *----------------------------------------------------------------------*/
 static short CalibrateIR(CalibrateIR_t *cal) {
 	int i, j;
-	short offset, pwm;				// 原点オフセット、モーター出力値
+	short offset, pwm;				// 原点オフセット平均値、モーター出力値
 	unsigned short L, minL, maxL;	// 左のセンサ値、最小値、最大値
 	unsigned short R, minR, maxR;	// 右のセンサ値、最小値、最大値
 
@@ -71,8 +78,8 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 	IRData_t IR[N_SAMPLES * 2];
 #endif
 
-	// 原点オフセットを観測する
-	cal->offset = offset = AdjustCenter();
+	// 原点オフセット平均値を観測する
+	offset = AdjustCenter();
 
 	minL = minR = 0xFFF;
 	maxL = maxR = 0;
@@ -84,23 +91,34 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 			WAIT(10);
 
 			if (j < N_SAMPLES / 2) {
-				PWM_OUT( pwm,  pwm);	// p > 0: 左回転, p < 0: 右回転
+				PWM_OUT(+pwm, -pwm); // p > 0: 左回転, p < 0: 右回転
 			} else {
-				PWM_OUT(-pwm, -pwm);	// p > 0: 右回転, p < 0: 左回転
+				PWM_OUT(-pwm, +pwm); // p > 0: 右回転, p < 0: 左回転
 			}
 
+			// 左右センサの値を読み込む
 			ADC_READ2(&L, &R);
-			L -= offset;
-			R -= offset;
+
+			// センサ位置のオフセットを補正する
+			//L -= offset;
+			//R += offset;
+
+			// それぞれの最小値、最大値を観測する
 			minL = MIN(minL, L);
 			maxL = MAX(maxL, L);
 			minR = MIN(minR, R);
 			maxR = MAX(maxR, R);
 
 #if TRACE_DEBUG
-			IR[n  ].L = (short)(L -= offset);
-			IR[n  ].R = (short)(R += offset);
+			IR[n  ].L = L;
+			IR[n++].R = R;
 #endif
+
+			if (j == N_SAMPLES / 2 - 1) {
+				// 慣性モーメントがゼロになる様、完全に停止させる
+				PWM_OUT(0, 0);
+				WAIT(100);
+			}
 		}
 
 		// 慣性モーメントがゼロになる様、完全に停止させる
@@ -108,17 +126,37 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 		WAIT(100);
 	}
 
+	// キャリブレーションパラメータを設定する
+	cal->center  = IR_CENTER;
+	cal->offset  = offset;
+	cal->offsetL = minL;
+	cal->offsetR = minR;
+	cal->gainL   = IR_RANGE * 100 / (maxL - minL);
+	cal->gainR   = IR_RANGE * 100 / (maxR - minR);
+
 #if TRACE_DEBUG
 	// USBケーブルの接続し、通信の成立を確認する
 	while (!SW_CLICK()) { LED_FLUSH(100); }
-	SCI_INIT();
-	SW_STANDBY();
+	SCI_INIT();		// 通信確立を確認し、
+	SW_STANDBY();	// SW1を押したら出力開始
 
+	// 補正係数用パラメータを出力する
+	SCI_PRINTF("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
+	SCI_PRINTF("0,%d,%d,%d,%d,%d,%d,%d\r\n", offset, minL, maxL, cal->gainL, minR, maxR, cal->gainR);
+	SCI_PRINTF("#No,L,R,L - R,L',R',L' - R'\r\n");
+
+	// キャリブレーション前後の値を出力する
 	for (i = 0; i < n; i++) {
-		SCI_PRINTF("%d,%d\r\n", IR[i].L, IR[i].R);
-	}
+		// 原点オフセット平均値のみ、左右の正規化なし
+		L = IR[i].L - offset;
+		R = IR[i].R + offset;
+		SCI_PRINTF("%d,%d,%d,%d,", i + 1, L, R, (short)(L - R));
 
-	SCI_PRINTF("offset:%d, minL:%d, maxL:%d, minR:%d, maxR:%d\r\n", offset, minL, maxL, minR, maxR);
+		// 左右の正規化あり
+		L = (IR[i].L - cal->offsetL) * cal->gainL / 100;
+		R = (IR[i].R - cal->offsetR) * cal->gainR / 100;
+		SCI_PRINTF("%d,%d,%d\r\n", L, R, (short)(L - R));
+	}
 #endif
 
 	return offset;
@@ -135,8 +173,6 @@ static void TRACE_RUN0(void) {
 /*----------------------------------------------------------------------
  * ライントレース - ON-OFF制御
  *----------------------------------------------------------------------*/
-#define	CENTER	100	// 中央とみなせる赤外線センサの閾値
-
 static const PID_t G1 = {
 	0,				// Kp (Don't care)
 	0,				// Kd (Don't care)
@@ -147,39 +183,70 @@ static const PID_t G1 = {
 static void TRACE_RUN1(void) {
 	CalibrateIR_t cal;
 	unsigned short L, R;
-	short E, offset;
+	short E;
 
-    // 赤外線センサの校正
-	offset = CalibrateIR(&cal);
+	// 赤外線センサのキャリブレーション
+#if	(CALIBRATION_METHOD == 1)
+	unsigned short oL, oR, gL, gR;
 
-    LED(LED1);
+	CalibrateIR(&cal);
+	oL = cal.offsetL;
+	oR = cal.offsetR;
+	gL = cal.gainL;
+	gR = cal.gainR;
+#else
+	short offset = CalibrateIR(&cal);
+#endif
 
-    while (1) {
-    	ADC_READ2(&L, &R);	// 左右赤外線センサ値を読み込む
-    	L -= offset;		// 左赤外線センサ値の原点を校正する
-    	R += offset;		// 右赤外線センサ値の原点を校正する
-    	E = L - R;			// 中心からのずれを算出する
+	LED(LED1);
 
-    	if (E > 0 && L > CENTER) {				// 右よりなら
-    		PWM_OUT(G1.TURNING, 0);				// 左に曲げる
-    	}
-    	else if (E < 0 && R > CENTER) {			// 左よりなら
-    		PWM_OUT(0, G1.TURNING);				// 右に曲げる
-    	}
-    	else {									// 中央付近なら
-    		PWM_OUT(G1.FORWARD, G1.FORWARD);	// 直進する
-    	}
+	while (1) {
+		ADC_READ2(&L, &R);			// 左右赤外線センサ値を読み込む
+
+#if	(CALIBRATION_METHOD == 1)
+		L = (L - oL) * gL / 100;	// 左赤外線センサ値を正規化する
+		R = (R - oR) * gR / 100;	// 右赤外線センサ値を正規化する
+#else
+		L -= offset;				// 左赤外線センサの原点を補正する
+		R += offset;				// 右赤外線センサの原点を補正する
+#endif
+
+		// 中心からのずれを算出する
+		E = L - R;
+
+		// 右寄りのズレが大きければ左に曲げる
+		if (E > 0 && L > IR_CENTER) {
+			PWM_OUT(G1.TURNING, 0);
+		}
+
+		// 左寄りのズレが大きければ右に曲げる
+		else if (E < 0 && R > IR_CENTER) {
+			PWM_OUT(0, G1.TURNING);
+		}
+
+		// 中央付近なら直進する
+		else {
+			PWM_OUT(G1.FORWARD, G1.FORWARD);
+		}
 	}
 }
 
 /*----------------------------------------------------------------------
  * ライントレース
- *  0. 赤外線センサの特性計測
- *  1. ON-OFF制御によるライントレース
- *  2. ON-OFF制御＋P制御によるライントレース
- *  3. PD制御によるライントレース
+ *  0: 赤外線センサの特性計測
+ *  1: ON-OFF制御によるライントレース
+ *  2: ON-OFF制御＋P制御によるライントレース
+ *  3: PD制御によるライントレース
  *----------------------------------------------------------------------*/
 void TRACE_RUN(int method) {
+	TIMER_INIT();	// WAIT()
+	PORT_INIT();	// SW_STANDBY()
+	ADC_INIT();		// A/D変換の初期化
+	PWM_INIT();		// PWM出力の初期化
+
+	SW_STANDBY();	// スイッチが押されるまで待機
+	LED(LED_ON);
+
 	switch (method) {
 	  case 0:
 		TRACE_RUN0();
