@@ -13,7 +13,7 @@
 #include "pwm.h"
 #include "trace.h"
 
-#define	TRACE_DEBUG		1
+#define	TRACE_DEBUG		0
 #if		TRACE_DEBUG
 #include <stdio.h>
 #include "sci.h"
@@ -175,20 +175,19 @@ static void TRACE_RUN0(void) {
  * ライントレース - ON-OFF制御
  *----------------------------------------------------------------------*/
 static const PID_t G1 = {
-	0,				// Kp (Don't care)
-	0,				// Kd (Don't care)
-	(PWM_MAX / 2),	// 前進成分の制御量
-	(PWM_MAX / 2)	// 旋回成分の制御量
+	0,		// Kp (Don't care)
+	0,		// Kd (Don't care)
+	15000,	// 前進成分の制御量
+	15000	// 旋回成分の制御量
 };
 
 static void TRACE_RUN1(void) {
 	CalibrateIR_t cal;
-	unsigned short L, R;
-	short E;
+	int L, R, E;
 
 	// 赤外線センサのキャリブレーション
 #if	(CALIBRATION_METHOD == 1)
-	unsigned short oL, oR, gL, gR;
+	int oL, oR, gL, gR;
 
 	CalibrateIR(&cal);
 	oL = cal.offsetL;
@@ -196,13 +195,12 @@ static void TRACE_RUN1(void) {
 	gL = cal.gainL;
 	gR = cal.gainR;
 #else
-	short offset = CalibrateIR(&cal);
+	int offset = CalibrateIR(&cal);
 #endif
 
-	LED(LED1);
-
 	while (1) {
-		ADC_READ2(&L, &R);			// 左右赤外線センサ値を読み込む
+		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
+		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
 #if	(CALIBRATION_METHOD == 1)
 		L = (L - oL) * gL / 100;	// 左赤外線センサ値を正規化する
@@ -217,17 +215,20 @@ static void TRACE_RUN1(void) {
 
 		// 右寄りのズレが大きければ左に曲げる
 		if (E > 0 && L > IR_CENTER) {
-			PWM_OUT(G1.TURNING, 0);
+			PWM_OUT(-G1.TURNING/2, G1.TURNING);
+			LED(LED2);
 		}
 
 		// 左寄りのズレが大きければ右に曲げる
 		else if (E < 0 && R > IR_CENTER) {
-			PWM_OUT(0, G1.TURNING);
+			PWM_OUT(G1.TURNING, -G1.TURNING/2);
+			LED(LED1);
 		}
 
 		// 中央付近なら直進する
 		else {
 			PWM_OUT(G1.FORWARD, G1.FORWARD);
+			LED(LED_ON);
 		}
 	}
 }
@@ -245,8 +246,9 @@ void TRACE_RUN(int method) {
 	ADC_INIT();		// A/D変換の初期化
 	PWM_INIT();		// PWM出力の初期化
 
+	LED(LED_ON);	// LEDを点灯させて
 	SW_STANDBY();	// スイッチが押されるまで待機
-	LED(LED_ON);
+	WAIT(500);		// 少し待ってからスタート
 
 	switch (method) {
 	  case 0:

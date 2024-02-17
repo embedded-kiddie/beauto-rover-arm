@@ -185,7 +185,7 @@ void PWM_OUT(short L, short R) {
 /*===============================================================================
  * モーターPWM制御の動作確認
  * - 電池ボックスをオンにして確認すること
- * - Vstone社製 Mtr_Run_lv() とはPWM指示値の正負が異なることに注意すること
+ * - Vstone社製 Mtr_Run_lv() とはPWM指示値の左右、正負が異なることに注意
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
@@ -258,7 +258,8 @@ void PWM_EXAMPLE(int method) {
 
 	// スイッチが押されるまで待機
 	while (!SW_CLICK()) { LED_FLUSH(100); }
-	LED(LED_ON);
+	WAIT(500);		// 少し待ってから
+	LED(LED_ON);	// LEDを点灯させてスタート
 
 	switch (method) {
 	  case 1:
