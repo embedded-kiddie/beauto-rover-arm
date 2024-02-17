@@ -51,10 +51,10 @@ typedef struct {
  * PID制御ゲインの定義
  *----------------------------------------------------------------------*/
 typedef struct {
-	int KP;
-	int KD;
-	int FORWARD;
-	int TURNING;
+	int KP;			// Kp 比例項係数
+	int KD;			// Kd 微分項係数
+	int FORWARD;	// 前進成分の制御量 （0～MAX_PWM）
+	int TURNING;	// 旋回成分の制御量 （0～MAX_PWM）
 } PID_t;
 
 /*----------------------------------------------------------------------
