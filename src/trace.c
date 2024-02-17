@@ -29,6 +29,12 @@
 #define	CALIBRATION_METHOD	1
 
 /*----------------------------------------------------------------------
+ * 赤外線センサ値の正規化
+ *----------------------------------------------------------------------*/
+#define	normalizeL(L, c)	((L - c.offsetL) * c.gainL / 100)
+#define	normalizeR(R, c)	((R - c.offsetR) * c.gainR / 100)
+
+/*----------------------------------------------------------------------
  * 車体をライン中心に設置した状態で左右センサ値の差を複数回観測し、
  * 平均化（ノイズ除去）することで、原点までのオフセットを算出する
  *
@@ -80,6 +86,10 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 
 	// 原点オフセット平均値を観測する
 	offset = AdjustCenter();
+
+	if (cal == NULL) {
+		return offset;
+	}
 
 	minL = minR = 0xFFF;
 	maxL = maxR = 0;
@@ -175,27 +185,21 @@ static void TRACE_RUN0(void) {
  * ライントレース - ON-OFF制御
  *----------------------------------------------------------------------*/
 static const PID_t G1 = {
-	0,		// Kp (Don't care)
-	0,		// Kd (Don't care)
-	15000,	// 前進成分の制御量
-	15000	// 旋回成分の制御量
+	0,				// Kp (Don't care)
+	0,				// Kd (Don't care)
+	14000,			// 前進成分の制御量
+	14000			// 旋回成分の制御量
 };
 
 static void TRACE_RUN1(void) {
-	CalibrateIR_t cal;
-	int L, R, E;
+	int L, R, E;	// 左右センサ値、偏差
 
 	// 赤外線センサのキャリブレーション
 #if	(CALIBRATION_METHOD == 1)
-	int oL, oR, gL, gR;
-
-	CalibrateIR(&cal);
-	oL = cal.offsetL;
-	oR = cal.offsetR;
-	gL = cal.gainL;
-	gR = cal.gainR;
+	CalibrateIR_t cal;
+	(void)CalibrateIR(&cal);
 #else
-	int offset = CalibrateIR(&cal);
+	int offset = CalibrateIR(NULL);
 #endif
 
 	while (1) {
@@ -203,8 +207,8 @@ static void TRACE_RUN1(void) {
 		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
 #if	(CALIBRATION_METHOD == 1)
-		L = (L - oL) * gL / 100;	// 左赤外線センサ値を正規化する
-		R = (R - oR) * gR / 100;	// 右赤外線センサ値を正規化する
+		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
 #else
 		L -= offset;				// 左赤外線センサの原点を補正する
 		R += offset;				// 右赤外線センサの原点を補正する
@@ -216,7 +220,7 @@ static void TRACE_RUN1(void) {
 		// 右寄りのズレが大きければ左に曲げる
 		if (E > 0 && L > IR_CENTER) {
 			PWM_OUT(-G1.TURNING/2, G1.TURNING);
-			LED(LED2);
+			LED(LED1);
 		}
 
 		// 左寄りのズレが大きければ右に曲げる
@@ -228,8 +232,111 @@ static void TRACE_RUN1(void) {
 		// 中央付近なら直進する
 		else {
 			PWM_OUT(G1.FORWARD, G1.FORWARD);
-			LED(LED_ON);
+			LED(LED2);
 		}
+	}
+}
+
+/*----------------------------------------------------------------------
+ * ライントレース - ON-OFF制御 + P制御
+ *----------------------------------------------------------------------*/
+static const PID_t G2 = {
+	20,				// Kp
+	0,				// Kd (Don't care)
+	13000,			// FORWARD 前進成分の制御量
+	12000			// TURNING 旋回成分の制御量
+};
+
+static void TRACE_RUN2(void) {
+	int L, R, E;	// 左右センサ値、偏差
+	int P;			// 旋回の比例成分
+
+	// 赤外線センサのキャリブレーション
+	CalibrateIR_t cal;
+	(void)CalibrateIR(&cal);
+
+	while (1) {
+		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
+		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
+
+		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
+
+		// 中心からのずれを算出する
+		E = L - R;
+
+		// 旋回の比例成分を算出する
+		P = G2.KP * ABS(E);
+		P = MIN(MAX(P, -PWM_MAX), PWM_MAX);
+
+		// 右寄りのズレが大きければ左に曲げる
+		if (E > 0 && L > IR_CENTER) {
+			PWM_OUT(-P, G2.TURNING + P);
+			LED(LED1);
+		}
+
+		// 左寄りのズレが大きければ右に曲げる
+		else if (E < 0 && R > IR_CENTER) {
+			PWM_OUT(G2.TURNING + P, -P);
+			LED(LED1);
+		}
+
+		// 中央付近なら直進する
+		else {
+			PWM_OUT(G2.FORWARD, G2.FORWARD);
+			LED(LED2);
+		}
+	}
+}
+
+/*----------------------------------------------------------------------
+ * ライントレース - PD制御
+ *----------------------------------------------------------------------*/
+#define	DT	1000	// 微分用の制御周期[sec]の逆数[Hz]
+static const PID_t G3 = {
+	35,				// Kp
+	0,				// Kd (Don't care)
+	15000,			// 前進成分の制御量
+	15000			// 旋回成分の制御量
+};
+
+static void TRACE_RUN3(void) {
+	int L, R;		// 左右の赤外線センサ値
+	int F, T;		// 前進成分、旋回成分の制御量
+	int P, Q = 0;	// P項の元となる偏差、前回偏差
+	int D;			// D項の元となる偏差の微分値
+
+	// 赤外線センサのキャリブレーション
+	CalibrateIR_t cal;
+	(void)CalibrateIR(&cal);
+
+	while (1) {
+		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
+		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
+
+		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
+
+		/*-----------------------------------------
+		 * 旋回成分の算出 - PD制御量
+		 *-----------------------------------------*/
+		P = L - R; 					// 中央からの偏差を算出する
+		D = (P - Q) * DT;			// 偏差の微分値を算出する
+		Q = P;						// 前回偏差を今回値で更新する
+		T = G3.KP * P + G3.KD * D;	// PD制御量を算出する
+		T = MIN(MAX(T, -G3.TURNING), G3.TURNING);
+
+		/*-----------------------------------------
+		 * 前進成分の算出 - Duty 100% - |旋回成分|
+		 *-----------------------------------------*/
+		F = PWM_MAX - ABS(T);
+
+		/*-----------------------------------------
+		 * 前進成分と旋回成分を足し合わせて走行
+		 *-----------------------------------------*/
+		PWM_OUT(F + T, F - T);
+
+		LED(P > 0 ? LED2 : LED1);
 	}
 }
 
@@ -251,19 +358,10 @@ void TRACE_RUN(int method) {
 	WAIT(500);		// 少し待ってからスタート
 
 	switch (method) {
-	  case 0:
-		TRACE_RUN0();
-		break;
-
-	  case 1:
-		TRACE_RUN1();
-		break;
-
-	  case 2:
-		break;
-
-	  case 3:
-	  default:
-		break;
+	  case 0: TRACE_RUN0(); break;
+	  case 1: TRACE_RUN1(); break;
+	  case 2: TRACE_RUN2(); break;
+	  case 3: TRACE_RUN3(); break;
+	  default: break;
 	}
 }
