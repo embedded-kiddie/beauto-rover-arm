@@ -341,6 +341,24 @@ static void TRACE_RUN3(void) {
 }
 
 /*----------------------------------------------------------------------
+ * ライントレース - PD制御 + 楽譜再生
+ *----------------------------------------------------------------------*/
+static void TRACE_RUN4(void) {
+#include "play.h"
+	const MusicScore_t ms[] = {
+#include "truth.dat"	// tempo = 155
+	};
+
+	PLAY_INIT();
+
+	// バックグラウンドで演奏
+	PLAY(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
+
+	// ライントレース - PD制御
+	TRACE_RUN3();
+}
+
+/*----------------------------------------------------------------------
  * ライントレース
  *  0: 赤外線センサの特性計測
  *  1: ON-OFF制御によるライントレース
@@ -358,10 +376,10 @@ void TRACE_RUN(int method) {
 	WAIT(500);		// 少し待ってからスタート
 
 	switch (method) {
-	  case 0: TRACE_RUN0(); break;
-	  case 1: TRACE_RUN1(); break;
-	  case 2: TRACE_RUN2(); break;
-	  case 3: TRACE_RUN3(); break;
-	  default: break;
+	  case 0:	TRACE_RUN0(); break;
+	  case 1:	TRACE_RUN1(); break;
+	  case 2:	TRACE_RUN2(); break;
+	  case 3:	TRACE_RUN3(); break;
+	  default:	TRACE_RUN4(); break;
 	}
 }
