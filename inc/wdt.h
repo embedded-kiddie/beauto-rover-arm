@@ -36,9 +36,12 @@ inline static void ClearTimeoutFlag(void) {
 #ifdef	EXAMPLE
 /*===============================================================================
  * ウォッチドッグタイマーの動作確認
- *	- タイムアウト時の振る舞い確認
+ * - タイムアウト時の振る舞い確認
+ * - exampleType
+ *	1: メイン処理中でウォッチドッグを叩く
+ *	2: SysTick割り込み中でウォッチドッグを叩く
  *===============================================================================*/
-extern void WDT_EXAMPLE(int type);
+extern void WDT_EXAMPLE(int exampleType);
 #endif // EXAMPLE
 
 #endif // _WDT_H_

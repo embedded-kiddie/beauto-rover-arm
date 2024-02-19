@@ -341,8 +341,11 @@ static void PMU_EXAMPLE2() {
 
 /*----------------------------------------------------------------------
  * パワーマネジメントユニットの動作例
+ * - exampleType
+ *	1: Active mode　でのスリープ
+ *	2: Sleep/Deep-sleep/Deep Power-down
  *----------------------------------------------------------------------*/
-void PMU_EXAMPLE(int type) {
+void PMU_EXAMPLE(int exampleType) {
 	const MusicScore_t m[] = {{Fa6, N16}, {Fa5, N16}};
 
 	TIMER_INIT();	// TIMER_WAKEUP()
@@ -359,7 +362,7 @@ void PMU_EXAMPLE(int type) {
 	SW_STANDBY();	// 通信の確立を確認し、SW1で動作を開始する
 #endif
 
-	switch (type) {
+	switch (exampleType) {
 	  case 1:
 		PMU_EXAMPLE1();
 		break;

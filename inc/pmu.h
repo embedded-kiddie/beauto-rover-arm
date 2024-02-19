@@ -26,9 +26,12 @@ extern unsigned int PMU_SLEEP(int mode);
 #ifdef	EXAMPLE
 /*===============================================================================
  * パワーマネジメントユニットの動作確認
- *	- Active/Sleep/Deep-sleep/Deep Power-down 各モードの動作例
+ * - Active/Sleep/Deep-sleep/Deep Power-down 各モードの動作例
+ * - exampleType
+ *	1: Active mode　でのスリープ
+ *	2: Sleep/Deep-sleep/Deep Power-down
  *===============================================================================*/
-extern void PMU_EXAMPLE(int type);
+extern void PMU_EXAMPLE(int exampleType);
 #endif // EXAMPLE
 
 #endif // _PMU_H_

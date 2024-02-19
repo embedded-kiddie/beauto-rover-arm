@@ -6,15 +6,6 @@
  * Copyright   : $(copyright)
  * Description : main function
  *===============================================================================*/
-#include "ioport.h"
-#include "timer.h"
-#include "adc.h"
-#include "pwm.h"
-#include "play.h"
-#include "sci.h"
-#include "pmu.h"
-#include "wdt.h"
-#include "trace.h"
 
 /*----------------------------------------------------------------------
  * メイン関数
@@ -23,61 +14,77 @@ int main(void) {
 #if		0
 	/*-----------------------------------------
 	 * 汎用I/Oポートの動作確認
+	 * - スイッチ監視とLED点滅
 	 *-----------------------------------------*/
+	extern void PORT_EXAMPLE(void);
 	PORT_EXAMPLE();
 
 #elif	0
 	/*-----------------------------------------
 	 * A/D変換の動作確認
+	 *　- バーストモードをサポート
 	 *-----------------------------------------*/
+	extern void ADC_EXAMPLE(void);
 	ADC_EXAMPLE();
 
 #elif	0
 	/*-----------------------------------------
 	 * モーターPWM制御の動作確認
-	 *  1: 直進性を確認し、駆動系のゲインを調整する
-	 *  2: 前進 --> 右旋回 --> 左旋回 --> 後退
+	 * - exampleType
+	 *	1: 直進性を確認し、駆動系のゲインを調整する
+	 *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
 	 *-----------------------------------------*/
+	extern void PWM_EXAMPLE(int exampleType);
 	PWM_EXAMPLE(1);
 
 #elif	0
 	/*-----------------------------------------
 	 * USBシリアル通信の動作確認
+	 * - exampleType
 	 *	1: エコーバック
 	 *	2: printf(), scanf()
 	 *-----------------------------------------*/
+	extern void SCI_EXAMPLE(int exampleType);
 	SCI_EXAMPLE(2);
 
 #elif	0
 	/*-----------------------------------------
 	 * ウォッチドッグタイマーの動作確認
+	 * - exampleType
 	 *	1: メイン処理中でウォッチドッグを叩く
 	 *	2: SysTick割り込み中でウォッチドッグを叩く
 	 *-----------------------------------------*/
+	extern void WDT_EXAMPLE(int exampleType);
 	WDT_EXAMPLE(1);
 
 #elif	0
 	/*-----------------------------------------
 	 * パワーマネジメントユニットの動作確認
+	 * - exampleType
 	 *	1: Active mode　でのスリープ
 	 *	2: Sleep/Deep-sleep/Deep Power-down
 	 *-----------------------------------------*/
+	extern void PMU_EXAMPLE(int exampleType);
 	PMU_EXAMPLE(2);
 
 #elif	0
 	/*-----------------------------------------
 	 * バックグランド演奏の動作確認
+	 * - フォアグラウンドでLチカ
 	 *-----------------------------------------*/
+	extern void PLAY_EXAMPLE(void);
 	PLAY_EXAMPLE();
 
 #else
 	/*-----------------------------------------
 	 * ライントレース
-	 *  0: 赤外線センサの特性計測
-	 *  1: ON-OFF制御によるライントレース
-	 *  2: ON-OFF制御＋P制御によるライントレース
-	 *  3: PD制御によるライントレース
+	 * - runType
+	 *	0: 赤外線センサの特性計測
+	 *	1: ON-OFF制御によるライントレース
+	 *	2: ON-OFF制御＋P制御によるライントレース
+	 *	3: PD制御によるライントレース
 	 *-----------------------------------------*/
+	extern void TRACE_RUN(int runType);
 	TRACE_RUN(4);
 
 #endif

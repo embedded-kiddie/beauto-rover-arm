@@ -202,7 +202,7 @@ void WDT_IRQHandler(void) {
 
 #ifdef	EXAMPLE
 /*===============================================================================
- * WatchDog Timer の動作確認
+ * ウォッチドッグタイマーの動作確認
  * - タイムアウト時の振る舞を確認する
  *
  *　【WDT_FEED_ON = 0, WDT_RESET_CPU = 0】
@@ -274,9 +274,12 @@ static void WTD_EXAMPLE2(void) {
 }
 
 /*----------------------------------------------------------------------
- * WatchDog Timer の動作例
+ * ウォッチドッグタイマーの動作例
+ * - exampleType
+ *	1: メイン処理中でウォッチドッグを叩く
+ *	2: SysTick割り込み中でウォッチドッグを叩く
  *----------------------------------------------------------------------*/
-void WDT_EXAMPLE(int type) {
+void WDT_EXAMPLE(int exampleType) {
 	const MusicScore_t m[] = {{Fa6, N16}, {Fa5, N16}};
 
 	TIMER_INIT();	// WAIT()
@@ -293,7 +296,7 @@ void WDT_EXAMPLE(int type) {
 	SW_STANDBY();	// 通信の確立を確認し、SW1で動作を開始する
 #endif
 
-	switch (type) {
+	switch (exampleType) {
 	  case 1:
 		WTD_EXAMPLE1();
 		break;

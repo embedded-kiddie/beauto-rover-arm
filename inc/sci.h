@@ -36,10 +36,13 @@ extern CDC_LINE_CODING CDC_LineCoding;
 #ifdef	EXAMPLE
 /*===============================================================================
  * USBシリアル通信の動作確認
- *	- ホストPCとUSBケーブルで接続し、ターミナルソフトを起動すること
- *	- 921600bpsまで動作確認済み
+ * - ホストPCとUSBケーブルで接続し、ターミナルソフトを起動すること
+ * - 921600bpsまで動作確認済み
+ * - exampleType
+ *	1: エコーバック
+ *	2: printf(), scanf()
  *===============================================================================*/
-extern void SCI_EXAMPLE(int type);
+extern void SCI_EXAMPLE(int exampleType);
 #endif // EXAMPLE
 
 #endif // _SCI_H_

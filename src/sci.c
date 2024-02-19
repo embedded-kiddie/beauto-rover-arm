@@ -262,8 +262,11 @@ void SCI_EXAMPLE2(void) {
 
 /*--------------------------------------------------------------------------
  * USBシリアル通信の動作例
+ * - exampleType
+ *	1: エコーバック
+ *	2: printf(), scanf()
  *--------------------------------------------------------------------------*/
-void SCI_EXAMPLE(int type) {
+void SCI_EXAMPLE(int exampleType) {
 	TIMER_INIT();	// WAIT()
 	PORT_INIT();	// SW_STANDBY()
 	SCI_INIT();		// PIO0_3がUSB_VBUSと競合するため、LED1（橙）点灯せず
@@ -271,7 +274,7 @@ void SCI_EXAMPLE(int type) {
 	SW_STANDBY();	// 通信の確立を確認し、SW1で動作を開始する
 	LED(LED_ON);	// LED2（緑）のみ点灯
 
-	switch (type) {
+	switch (exampleType) {
 	  case 1:
 		SCI_EXAMPLE1();
 		break;

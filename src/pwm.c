@@ -247,11 +247,12 @@ void PWM_EXAMPLE2(void) {
 }
 
 /*----------------------------------------------------------------------
- * モーターPWM制御の動作確認
- *  1: 直進性を確認し、駆動系のゲインを調整する
- *  2: 前進 --> 右旋回 --> 左旋回 --> 後退
+ * モーターPWM制御の動作例
+ * - exampleType
+ *	1: 直進性を確認し、駆動系のゲインを調整する
+ *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *----------------------------------------------------------------------*/
-void PWM_EXAMPLE(int method) {
+void PWM_EXAMPLE(int exampleType) {
 	TIMER_INIT();	// WAIT()
 	PORT_INIT();	// SW_CLICK(), LED()
 	PWM_INIT();		// PWM出力の初期化
@@ -261,7 +262,7 @@ void PWM_EXAMPLE(int method) {
 	WAIT(500);		// 少し待ってから
 	LED(LED_ON);	// LEDを点灯させてスタート
 
-	switch (method) {
+	switch (exampleType) {
 	  case 1:
 		  PWM_EXAMPLE1();
 		break;

@@ -360,12 +360,14 @@ static void TRACE_RUN4(void) {
 
 /*----------------------------------------------------------------------
  * ライントレース
- *  0: 赤外線センサの特性計測
- *  1: ON-OFF制御によるライントレース
- *  2: ON-OFF制御＋P制御によるライントレース
- *  3: PD制御によるライントレース
+ * - runType
+ *	0: 赤外線センサの特性計測
+ *	1: ON-OFF制御によるライントレース
+ *	2: ON-OFF制御＋P制御によるライントレース
+ *	3: PD制御によるライントレース
+ *	4: PD制御によるライントレース＋バックグラウンド演奏
  *----------------------------------------------------------------------*/
-void TRACE_RUN(int method) {
+void TRACE_RUN(int runType) {
 	TIMER_INIT();	// WAIT()
 	PORT_INIT();	// SW_STANDBY()
 	ADC_INIT();		// A/D変換の初期化
@@ -375,7 +377,7 @@ void TRACE_RUN(int method) {
 	SW_STANDBY();	// スイッチが押されるまで待機
 	WAIT(500);		// 少し待ってからスタート
 
-	switch (method) {
+	switch (runType) {
 	  case 0:	TRACE_RUN0(); break;
 	  case 1:	TRACE_RUN1(); break;
 	  case 2:	TRACE_RUN2(); break;

@@ -11,8 +11,14 @@
 
 /*----------------------------------------------------------------------
  * 関数のプロトタイプ宣言
+ * - runType
+ *	0: 赤外線センサの特性計測
+ *	1: ON-OFF制御によるライントレース
+ *	2: ON-OFF制御＋P制御によるライントレース
+ *	3: PD制御によるライントレース
+ *	4: PD制御によるライントレース＋バックグラウンド演奏
  *----------------------------------------------------------------------*/
-extern void TRACE_RUN(int method);
+extern void TRACE_RUN(int runType);
 
 /*----------------------------------------------------------------------
  * 赤外線(Infrared)センサの出力補正用パラメータ
@@ -63,9 +69,7 @@ typedef struct {
 #define	MAP_EOD		0xffffffff	// End of Data for "count"
 typedef struct {
 	unsigned long	count;
-	int				forward;
-	short			kp;
-	short			kd;
+	PID_t			pid;
 } CourseMap_t;
 
 #endif // _TRACE_H_

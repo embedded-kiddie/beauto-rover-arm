@@ -23,10 +23,13 @@ extern void PWM_OUT(short L, short R);
 #ifdef	EXAMPLE
 /*===============================================================================
  * モーターPWM制御の動作確認
- *	- 電池ボックスをオンにして確認すること
- *	- Vstone社製 Mtr_Run_lv() とはPWM指示値の左右、正負が異なることに注意
+ * - 電池ボックスをオンにして確認すること
+ * - Vstone社製 Mtr_Run_lv() とはPWM指示値の左右、正負が異なることに注意
+ * - exampleType
+ *	1: 直進性を確認し、駆動系のゲインを調整する
+ *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *===============================================================================*/
-extern void PWM_EXAMPLE(int method);
+extern void PWM_EXAMPLE(int exampleType);
 #endif // EXAMPLE
 
 #endif // _PWM_H_
