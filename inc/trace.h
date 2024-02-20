@@ -24,7 +24,7 @@ extern void TRACE_RUN(int runType);
  * 赤外線(Infrared)センサの出力補正用パラメータ
  *----------------------------------------------------------------------*/
 #define N_SAMPLES	64		// 観測データのサンプル数
-#define MTR_POWER	0x1800	// モーター制御量（トレースラインを十分に跨ぐ程度の出力）
+#define MTR_POWER	0x2000	// モーター制御量（トレースラインを十分に跨ぐ程度の出力）
 #define	IR_RANGE	750		// センサ出力の範囲（0～IR_RANGE）
 #define	IR_CENTER	100		// 中央とみなせる赤外線センサの閾値
 #define	IR_STOP		825		// 停止を判定するセンサレベル
