@@ -195,7 +195,7 @@ void PWM_OUT(short L, short R) {
 /*----------------------------------------------------------------------
  * 動作例1: 直進性を確認し、駆動系のゲインを調整する
  *----------------------------------------------------------------------*/
-void PWM_EXAMPLE1(void) {
+void PwmExample1(void) {
 	unsigned short pwm, delta = PWM_MAX / 200;
 
 	while (1) {
@@ -228,7 +228,7 @@ void PWM_EXAMPLE1(void) {
 /*----------------------------------------------------------------------
  * 動作例2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *----------------------------------------------------------------------*/
-void PWM_EXAMPLE2(void) {
+void PwmExample2(void) {
 	short pwm = PWM_MAX / 2; // デューティ50%で動作
 
 	while (1) {
@@ -264,12 +264,12 @@ void PWM_EXAMPLE(int exampleType) {
 
 	switch (exampleType) {
 	  case 1:
-		  PWM_EXAMPLE1();
+		  PwmExample1();
 		break;
 
 	  case 2:
 	  default:
-		  PWM_EXAMPLE2();
+		  PwmExample2();
 		break;
 	}
 }

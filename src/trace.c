@@ -4,7 +4,7 @@
  * Version     :
  * Model type  : VS-WRC103LV
  * Copyright   : $(copyright)
- * Description : Pulse Width Demodulator functions using CT16B0, CT16B1
+ * Description : Line Trace functions
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
@@ -31,8 +31,8 @@
 /*----------------------------------------------------------------------
  * 赤外線センサ値の正規化
  *----------------------------------------------------------------------*/
-#define	normalizeL(L, c)	((L - c.offsetL) * c.gainL / 100)
-#define	normalizeR(R, c)	((R - c.offsetR) * c.gainR / 100)
+#define	NormalizeL(L, c)	((L - c.offsetL) * c.gainL / 100)
+#define	NormalizeR(R, c)	((R - c.offsetR) * c.gainR / 100)
 
 /*----------------------------------------------------------------------
  * 車体をライン中心に設置した状態で左右センサ値の差を複数回観測し、
@@ -176,7 +176,7 @@ static short CalibrateIR(CalibrateIR_t *cal) {
  * ライントレース - 赤外線センサの特性計測
  *	- TRACE_DEBUG を 1 に設定、計測結果をシリアル通信経由でホストPCに送信する
  *----------------------------------------------------------------------*/
-static void TRACE_RUN0(void) {
+static void TraceRun0(void) {
 	CalibrateIR_t cal;
 	CalibrateIR(&cal);
 }
@@ -191,7 +191,7 @@ static const PID_t G1 = {
 	14000			// 旋回成分の制御量
 };
 
-static void TRACE_RUN1(void) {
+static void TraceRun1(void) {
 	int L, R, E;	// 左右センサ値、偏差
 
 	// 赤外線センサのキャリブレーション
@@ -207,8 +207,8 @@ static void TRACE_RUN1(void) {
 		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
 #if	(CALIBRATION_METHOD == 1)
-		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
-		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
+		L = NormalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = NormalizeR(R, cal);		// 右赤外線センサ値を正規化する
 #else
 		L -= offset;				// 左赤外線センサの原点を補正する
 		R += offset;				// 右赤外線センサの原点を補正する
@@ -247,7 +247,7 @@ static const PID_t G2 = {
 	12000			// TURNING 旋回成分の制御量
 };
 
-static void TRACE_RUN2(void) {
+static void TraceRun2(void) {
 	int L, R, E;	// 左右センサ値、偏差
 	int P;			// 旋回の比例成分
 
@@ -259,8 +259,8 @@ static void TRACE_RUN2(void) {
 		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
 		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
-		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
-		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
+		L = NormalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = NormalizeR(R, cal);		// 右赤外線センサ値を正規化する
 
 		// 中心からのずれを算出する
 		E = L - R;
@@ -300,7 +300,7 @@ static const PID_t G3 = {
 	32767			// 旋回成分の制御量 （0～MAX_PWM）
 };
 
-static void TRACE_RUN3(void) {
+static void TraceRun3(void) {
 	int L, R;		// 左右の赤外線センサ値
 	int F, T;		// 前進成分、旋回成分の制御量
 	int P, Q = 0;	// P項の元となる偏差、前回偏差
@@ -314,8 +314,8 @@ static void TRACE_RUN3(void) {
 		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
 		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
-		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
-		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
+		L = NormalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = NormalizeR(R, cal);		// 右赤外線センサ値を正規化する
 
 		/*-----------------------------------------
 		 * 旋回成分の算出 - PD制御量
@@ -343,7 +343,7 @@ static void TRACE_RUN3(void) {
 /*----------------------------------------------------------------------
  * ライントレース - PD制御 + 楽譜再生
  *----------------------------------------------------------------------*/
-static void TRACE_RUN4(void) {
+static void TraceRun4(void) {
 #include "play.h"
 	const MusicScore_t ms[] = {
 #include "truth.dat"	// tempo = 155
@@ -355,7 +355,7 @@ static void TRACE_RUN4(void) {
 	PLAY(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
 
 	// ライントレース - PD制御
-	TRACE_RUN3();
+	TraceRun3();
 }
 
 /*----------------------------------------------------------------------
@@ -378,10 +378,10 @@ void TRACE_RUN(int runType) {
 	WAIT(500);		// 少し待ってからスタート
 
 	switch (runType) {
-	  case 0:	TRACE_RUN0(); break;
-	  case 1:	TRACE_RUN1(); break;
-	  case 2:	TRACE_RUN2(); break;
-	  case 3:	TRACE_RUN3(); break;
-	  default:	TRACE_RUN4(); break;
+	  case 0:	TraceRun0(); break;
+	  case 1:	TraceRun1(); break;
+	  case 2:	TraceRun2(); break;
+	  case 3:	TraceRun3(); break;
+	  default:	TraceRun4(); break;
 	}
 }

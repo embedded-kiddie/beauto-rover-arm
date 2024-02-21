@@ -1,5 +1,5 @@
 /*===============================================================================
- * Name        : ioport.c
+ * Name        : gpio.c
  * Author      : $(author)
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343

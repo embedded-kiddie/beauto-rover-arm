@@ -4,7 +4,7 @@
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343
  * Copyright   : $(copyright)
- * Description : Pulse Width Demodulator functions using CT16B0, CT16B1
+ * Description : Serial Communication Interface using USB CDC
  *===============================================================================*/
 // Cortex Microcontroller Software Interface Standard
 #ifdef __USE_CMSIS
@@ -224,7 +224,7 @@ int __sys_readc(void) {
 /*----------------------------------------------------------------------
  * 動作例1: エコーバック
  *----------------------------------------------------------------------*/
-void SCI_EXAMPLE1(void) {
+void SciExample1(void) {
 	while (1) {
 		unsigned char data = 0;
 		if (SciByteRx(&data)) {
@@ -236,7 +236,7 @@ void SCI_EXAMPLE1(void) {
 /*----------------------------------------------------------------------
  * 動作例2: printf(), scanf()
  *----------------------------------------------------------------------*/
-void SCI_EXAMPLE2(void) {
+void SciExample2(void) {
 	int i = 0;
 	const char *txt = "0123456789012345678901234567890123456789012345678901234567890123456789\r\n";
 
@@ -276,12 +276,12 @@ void SCI_EXAMPLE(int exampleType) {
 
 	switch (exampleType) {
 	  case 1:
-		SCI_EXAMPLE1();
+		SciExample1();
 		break;
 
 	  case 2:
 	  default:
-		SCI_EXAMPLE2();
+		SciExample2();
 		break;
 	}
 }

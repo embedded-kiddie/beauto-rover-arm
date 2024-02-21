@@ -304,7 +304,7 @@ static void Wakeup(void) {
 /*----------------------------------------------------------------------
  * 動作例1: Active mode　でのスリープ
  *----------------------------------------------------------------------*/
-static void PMU_EXAMPLE1() {
+static void PmuExample1() {
 	TIMER_WAKEUP(1, Wakeup);		// 1[msec]後にタイマー割り込み発生させる
 
 	while (1) {
@@ -316,7 +316,7 @@ static void PMU_EXAMPLE1() {
 /*----------------------------------------------------------------------
  * 動作例2: Active/Sleep/Deep-sleep/Deep Power-down の各モード動作例
  *----------------------------------------------------------------------*/
-static void PMU_EXAMPLE2() {
+static void PmuExample2() {
 #if	(INTERRUPT_FROM == INTERNAL_TIMER)
 	PMU_WAKEUP(1000);				// 内部割込み：1秒周期のタイマー割り込みでSLEEPから復帰
 #else
@@ -364,12 +364,12 @@ void PMU_EXAMPLE(int exampleType) {
 
 	switch (exampleType) {
 	  case 1:
-		PMU_EXAMPLE1();
+		PmuExample1();
 		break;
 
 	  case 2:
 	  default:
-		PMU_EXAMPLE2();
+		PmuExample2();
 		break;
 	}
 }

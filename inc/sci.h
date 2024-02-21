@@ -4,7 +4,7 @@
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343
  * Copyright   : $(copyright)
- * Description : Pulse Width Demodulator functions using CT16B0, CT16B1
+ * Description : Serial Communication Interface using USB CDC
  *===============================================================================*/
 #ifndef	_SCI_H_
 #define	_SCI_H_

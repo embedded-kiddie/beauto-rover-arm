@@ -4,7 +4,7 @@
  Version     :
  Model type  : VS-WRC103LV
  Copyright   : $(copyright)
- Description : Pulse Width Demodulator definitions using CT16B0, CT16B1
+ Description : Line Trace definitions
 ===============================================================================*/
 #ifndef _TRACE_H_
 #define _TRACE_H_

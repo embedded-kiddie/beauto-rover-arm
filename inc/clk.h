@@ -6,8 +6,8 @@
  * Copyright   : $(copyright)
  * Description : Microcontroller internal clock definitions
  *===============================================================================*/
-#ifndef _MCU_H_
-#define _MCU_H_
+#ifndef _CLK_H_
+#define _CLK_H_
 
 /*----------------------------------------------------------------------
  * メインクロックの発信源、即ちクロック周波数を変更した場合、タイマーのプリスケール値も
@@ -104,4 +104,4 @@ extern void SetPowerDownAwake(unsigned long mask);
 extern void DelPowerDownRun(unsigned long mask);
 extern void AddPowerDownRun(unsigned long mask);
 
-#endif // _MCU_H_
+#endif // _CLK_H_

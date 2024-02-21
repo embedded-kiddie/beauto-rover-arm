@@ -1,13 +1,13 @@
 /*===============================================================================
- Name        : ioport.h
+ Name        : gpio.h
  Author      : $(author)
  Version     :
  CPU type    : ARM Cortex-M3 LPC1343
  Copyright   : $(copyright)
  Description : General Purpose I/O definitions
 ===============================================================================*/
-#ifndef	_IOPORT_H_
-#define	_IOPORT_H_
+#ifndef	_GPIO_H_
+#define	_GPIO_H_
 
 // Cortex Microcontroller Software Interface Standard
 #ifdef __USE_CMSIS
@@ -90,4 +90,4 @@ extern void SHOW_VALUE(long val);
 extern void GPIO_EXAMPLE(void);
 #endif // EXAMPLE
 
-#endif // _IOPORT_H_
+#endif // _GPIO_H_

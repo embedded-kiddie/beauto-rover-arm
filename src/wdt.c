@@ -246,7 +246,7 @@ static void FailHandler(void) {
 /*----------------------------------------------------------------------
  * 動作例1:　メイン処理中でウォッチドッグを叩く
  *----------------------------------------------------------------------*/
-static void WTD_EXAMPLE1(void) {
+static void WdtExample1(void) {
 	WDT_TIMEOUT(2000, FailHandler);	// タイムアウト時に実行する関数を登録する
 	WDT_START();					// ウォッチドッグによる監視を開始する
 
@@ -261,7 +261,7 @@ static void WTD_EXAMPLE1(void) {
 /*----------------------------------------------------------------------
  * 動作例2: SysTick割り込み中でウォッチドッグを叩く
  *----------------------------------------------------------------------*/
-static void WTD_EXAMPLE2(void) {
+static void WdtExample2(void) {
 	WDT_TIMEOUT(2000, FailHandler);	// タイムアウト時に実行される関数を登録する
 	WDT_FEED_SYSTICK(1000);			// SysTick割込みハンドラで定期的にウォッチドッグを叩く
 	WDT_START();					// ウォッチドッグによる監視を開始する
@@ -298,12 +298,12 @@ void WDT_EXAMPLE(int exampleType) {
 
 	switch (exampleType) {
 	  case 1:
-		WTD_EXAMPLE1();
+		WdtExample1();
 		break;
 
 	  case 2:
 	  default:
-		WTD_EXAMPLE2();
+		WdtExample2();
 		break;
 	}
 }
