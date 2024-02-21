@@ -78,13 +78,13 @@ int main(void) {
 #else
 	/*-----------------------------------------
 	 * ライントレース
-	 * - runType
+	 * - runMode
 	 *	0: 赤外線センサの特性計測
 	 *	1: ON-OFF制御によるライントレース
 	 *	2: ON-OFF制御＋P制御によるライントレース
 	 *	3: PD制御によるライントレース
 	 *-----------------------------------------*/
-	extern void TRACE_RUN(int runType);
+	extern void TRACE_RUN(int runMode);
 	TRACE_RUN(4);
 
 #endif

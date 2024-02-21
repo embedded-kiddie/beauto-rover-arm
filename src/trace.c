@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "adc.h"
 #include "pwm.h"
+#include "play.h"
 #include "trace.h"
 
 #define	TRACE_DEBUG		0
@@ -344,12 +345,9 @@ static void TraceRun3(void) {
  * ライントレース - PD制御 + 楽譜再生
  *----------------------------------------------------------------------*/
 static void TraceRun4(void) {
-#include "play.h"
 	const MusicScore_t ms[] = {
 #include "truth.dat"	// tempo = 155
 	};
-
-	PLAY_INIT();
 
 	// バックグラウンドで演奏
 	PLAY(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
@@ -367,17 +365,35 @@ static void TraceRun4(void) {
  *	3: PD制御によるライントレース
  *	4: PD制御によるライントレース＋バックグラウンド演奏
  *----------------------------------------------------------------------*/
-void TRACE_RUN(int runType) {
+void TRACE_RUN(int runMode) {
+	unsigned long t0, t1;
+	const MusicScore_t ms = {Ra6, N16};
+
 	TIMER_INIT();	// WAIT()
 	GPIO_INIT();	// SW_STANDBY()
 	ADC_INIT();		// A/D変換の初期化
 	PWM_INIT();		// PWM出力の初期化
+	PLAY_INIT();	// PLAY()
 
-	LED(LED_ON);	// LEDを点灯させて
-	SW_STANDBY();	// スイッチが押されるまで待機
-	WAIT(500);		// 少し待ってからスタート
+	LED(LED_ON);	// LEDを点灯
 
-	switch (runType) {
+	// スイッチが押されるまで待機
+	while (SW_SCAN() == SW_OFF);
+
+	// スイッチが押された秒数に応じた走行モードを設定する
+	t0 = TIMER_READ();
+	while (SW_SCAN() == SW_ON) {
+		t1 = TIMER_READ();
+		if (t1 - t0 == 4000) {PLAY(&ms, 1, 180, 0); runMode = 4;} else
+		if (t1 - t0 == 3000) {PLAY(&ms, 1, 180, 0); runMode = 3;} else
+		if (t1 - t0 == 2000) {PLAY(&ms, 1, 180, 0); runMode = 2;} else
+		if (t1 - t0 == 1000) {PLAY(&ms, 1, 180, 0); runMode = 1;}
+	}
+
+	// 少し待ってからスタート
+	WAIT(500);
+
+	switch (runMode) {
 	  case 0:	TraceRun0(); break;
 	  case 1:	TraceRun1(); break;
 	  case 2:	TraceRun2(); break;

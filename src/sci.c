@@ -47,7 +47,7 @@ void SCI_INIT(void)
 	// 0x2 = Selects function SCK0
 	SetGpioBit(LPC_GPIO0, 6, 1);
 
-	SciInit();
+	SciInit(); // defined in cdcuser.c
 }
 
 /*--------------------------------------------------------------------------
