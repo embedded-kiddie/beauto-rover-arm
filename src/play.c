@@ -13,7 +13,7 @@
 
 #include "type.h"
 #include "play.h"
-#include "ioport.h"
+#include "gpio.h"
 
 #if	PLAY_MODE != PLAY_PWM_WRC103
 
@@ -502,7 +502,7 @@ int IS_PLAYING(void) {
  *	while (IS_PLAYING());
  *===============================================================================*/
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "play.h"
 
 /*----------------------------------------------------------------------
@@ -516,7 +516,7 @@ void PLAY_EXAMPLE(void) {
 	};
 
 	TIMER_INIT();	// WAIT()
-	PORT_INIT();	// LED()
+	GPIO_INIT();	// LED()
 	PLAY_INIT();
 
 	// バックグラウンドで演奏

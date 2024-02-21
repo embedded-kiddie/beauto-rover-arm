@@ -12,7 +12,7 @@
 #endif
 
 #include "type.h"
-#include "sys.h"
+#include "clk.h"
 #include "timer.h"
 
 /*----------------------------------------------------------------------

@@ -30,7 +30,7 @@ extern unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
 /*----------------------------------------------------------------------
  * GPIOの初期化
  *----------------------------------------------------------------------*/
-extern void PORT_INIT(void);
+extern void GPIO_INIT(void);
 
 /*----------------------------------------------------------------------
  * GPIO0のビット割り付け
@@ -87,7 +87,7 @@ extern void SHOW_VALUE(long val);
  * 汎用I/Oポートの動作確認
  * - スイッチ監視とLED点滅
  *===============================================================================*/
-extern void PORT_EXAMPLE(void);
+extern void GPIO_EXAMPLE(void);
 #endif // EXAMPLE
 
 #endif // _IOPORT_H_

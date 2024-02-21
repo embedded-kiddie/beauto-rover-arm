@@ -182,11 +182,11 @@ inline void ADC_READ2(unsigned short *L, unsigned short *R) {
  * ----+--->X
  *===============================================================================*/
 #include "type.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "adc.h"
 
 void ADC_EXAMPLE(void) {
-	PORT_INIT();	// LED()
+	GPIO_INIT();	// LED()
 	ADC_INIT();
 
 	while (1) {

@@ -17,7 +17,7 @@
 
 #include "type.h"
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "sci.h"
 
 #include "usb.h"
@@ -218,7 +218,7 @@ int __sys_readc(void) {
  *===============================================================================*/
 #include <stdio.h>
 #include "type.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "sci.h"
 
 /*----------------------------------------------------------------------
@@ -268,7 +268,7 @@ void SCI_EXAMPLE2(void) {
  *--------------------------------------------------------------------------*/
 void SCI_EXAMPLE(int exampleType) {
 	TIMER_INIT();	// WAIT()
-	PORT_INIT();	// SW_STANDBY()
+	GPIO_INIT();	// SW_STANDBY()
 	SCI_INIT();		// PIO0_3がUSB_VBUSと競合するため、LED1（橙）点灯せず
 
 	SW_STANDBY();	// 通信の確立を確認し、SW1で動作を開始する

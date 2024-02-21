@@ -23,10 +23,10 @@
 #endif
 
 #include "type.h"
-#include "sys.h"
-#include "timer.h"
+#include "clk.h"
 #include "wdt.h"
 #include "pmu.h"
+#include "timer.h"
 
 /*----------------------------------------------------------------------
  * Deep-sleep mode からの復帰方法
@@ -54,8 +54,8 @@ void WAKEUP_IRQHandler(void) {
 	}
 
 	// メインクロックの復帰
-	if (LPC_SYSCON->MAINCLKSEL != SYS_CLKSRC_PLLOUT) {
-		SwitchMainClockSrc(SYS_CLKSRC_PLLOUT);
+	if (LPC_SYSCON->MAINCLKSEL != CLK_SRC_PLLOUT) {
+		SwitchMainClockSrc(CLK_SRC_PLLOUT);
 	}
 
 	// 次のタイマーの設定
@@ -93,9 +93,9 @@ static void SleepMode() {
 	SCB->SCR &= ~(1<<2); // Clear SLEEPDEEP bit
 
 #if	0
-	SwitchMainClockSrc(SYS_CLKSRC_IRCOSC); // IRC oscillator (12[HMz])
+	SwitchMainClockSrc(CLK_SRC_IRCOSC); // IRC oscillator (12[HMz])
 #else
-	SwitchMainClockSrc(SYS_CLKSRC_WDTOSC); // WDT oscillator (9375[Hz])
+	SwitchMainClockSrc(CLK_SRC_WDTOSC); // WDT oscillator (9375[Hz])
 #endif
 }
 
@@ -118,7 +118,7 @@ static void DeepSleepMode() {
 //	AddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC | PDRUNCFG_FLASH | PDRUNCFG_WDTOSC);
 
 	// 2. メインクロックを WDT oscillator (9375[Hz]) に変更する
-	SwitchMainClockSrc(SYS_CLKSRC_WDTOSC);
+	SwitchMainClockSrc(CLK_SRC_WDTOSC);
 
 	// 3. Ensure DPDEN is disabled in the power control register
 	// 4.2.1 Power control register (PCON)
@@ -158,7 +158,7 @@ static void DeepSleepMode() {
 //	AddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC | PDRUNCFG_FLASH);
 
 	// 2. Switch MAINCLKSEL to IRC
-	SwitchMainClockSrc(SYS_CLKSRC_IRCOSC);
+	SwitchMainClockSrc(CLK_SRC_IRCOSC);
 
 	// 3. Ensure DPDEN is disabled in the power control register
 	// 4.2.1 Power control register (PCON)
@@ -287,7 +287,7 @@ unsigned int PMU_SLEEP(int mode) {
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "play.h"
 #include "wdt.h"
 #include "pmu.h"
@@ -349,7 +349,7 @@ void PMU_EXAMPLE(int exampleType) {
 	const MusicScore_t m[] = {{Fa6, N16}, {Fa5, N16}};
 
 	TIMER_INIT();	// TIMER_WAKEUP()
-	PORT_INIT();	// LED_BLINK()
+	GPIO_INIT();	// LED_BLINK()
 	WDT_INIT();		// WDT oscillator (Deep-sleep mode)
 
 	// 再起動を知らせる短音

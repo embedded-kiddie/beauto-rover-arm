@@ -1,10 +1,10 @@
 /*===============================================================================
- * Name        : sys.c
+ * Name        : clk.c
  * Author      : $(author)
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343
  * Copyright   : $(copyright)
- * Description : System internal functions
+ * Description : Microcontroller internal clock functions
  *===============================================================================*/
 // Cortex Microcontroller Software Interface Standard
 #ifdef __USE_CMSIS
@@ -14,8 +14,8 @@
 /*----------------------------------------------------------------------
  * Power Management Unit debug configuration
  *----------------------------------------------------------------------*/
-#define	SYS_DEBUG		0
-#if		SYS_DEBUG
+#define	CLK_DEBUG		0
+#if		CLK_DEBUG
 #include <stdio.h>
 #include "sci.h"
 #else
@@ -23,7 +23,7 @@
 #endif
 
 #include "type.h"
-#include "sys.h"
+#include "clk.h"
 
 /*----------------------------------------------------------------------
  * メインクロックの発信源、即ちクロック周波数を変更した場合、タイマーのプリスケール値も
@@ -57,10 +57,10 @@ void SwitchMainClockSrc(int src) {
 	extern void TIMER_INIT(void);
 
 	switch (src) {
-	  case SYS_CLKSRC_IRCOSC:	// 0: 12[MHz]
-	  case SYS_CLKSRC_PLLIN:	// 1: 12[MHz]
-	  case SYS_CLKSRC_WDTOSC:	// 2: 9375[Hz]
-	  case SYS_CLKSRC_PLLOUT:	// 3: 72[MHz]
+	  case CLK_SRC_IRCOSC:	// 0: 12[MHz]
+	  case CLK_SRC_PLLIN:	// 1: 12[MHz]
+	  case CLK_SRC_WDTOSC:	// 2: 9375[Hz]
+	  case CLK_SRC_PLLOUT:	// 3: 72[MHz]
 		break;
 	  default:
 		return;
@@ -78,9 +78,9 @@ void SwitchMainClockSrc(int src) {
 	// タイマープリスケールを更新する
 	TIMER_INIT();
 
-#if	SYS_DEBUG
+#if	CLK_DEBUG
 	// Watchdog oscillator の場合、周波数が低過ぎてシリアル通信ができない
-	if ((LPC_SYSCON->MAINCLKSEL & 0x3) != SYS_CLKSRC_WDTOSC) {
+	if ((LPC_SYSCON->MAINCLKSEL & 0x3) != CLK_SRC_WDTOSC) {
 		SCI_PRINTF("Main clock source = %d\r\n", LPC_SYSCON->MAINCLKSEL);
 		SCI_PRINTF("Main clock frequency = %d\r\n", GetMainClock());
 	}
@@ -128,9 +128,9 @@ unsigned long GetWDTClock(void) {
 	divsel  = (LPC_SYSCON->WDTOSCCTRL & 0x1F);
 	wdtfreq = WdtOSCFreq[freqsel] / ((divsel + 1) << 1);
 
-#if	SYS_DEBUG
+#if	CLK_DEBUG
 	// Watchdog oscillator の場合、周波数が低過ぎてシリアル通信ができない
-	if ((LPC_SYSCON->MAINCLKSEL & 0x3) != SYS_CLKSRC_WDTOSC) {
+	if ((LPC_SYSCON->MAINCLKSEL & 0x3) != CLK_SRC_WDTOSC) {
 		SCI_PRINTF("freqsel = %d\r\n", freqsel);
 		SCI_PRINTF("divsel  = %d\r\n", divsel );
 		SCI_PRINTF("wdtfreq = %d\r\n", wdtfreq);
@@ -149,12 +149,12 @@ unsigned long GetSysPLLClock(void) {
 	// 3.5.11 System PLL clock source select register (SYSPLLCLKSEL)
 	// Bit 1:0 (SEL) System PLL clock source (0 = IRC oscillator, 1 = System oscillator)
 	switch (LPC_SYSCON->SYSPLLCLKSEL & 0x3) {
-	  case SYS_CLKSRC_IRCOSC:	// 0: 12[MHz]
-		clock = SYS_FREQ_IRCOSC;
+	  case CLK_SRC_IRCOSC:	// 0: 12[MHz]
+		clock = CLK_FREQ_IRCOSC;
 		break;
 
-	  case SYS_CLKSRC_PLLIN:	// 1: 12[MHz]
-		clock = SYS_FREQ_PLLIN;
+	  case CLK_SRC_PLLIN:	// 1: 12[MHz]
+		clock = CLK_FREQ_PLLIN;
 		break;
 	}
 
@@ -169,19 +169,19 @@ unsigned long GetMainClock(void) {
 
 	// 3.5.15 Main clock source select register (MAINCLKSEL)
 	switch (LPC_SYSCON->MAINCLKSEL & 0x3) {
-	  case SYS_CLKSRC_IRCOSC:	// 0: 12[MHz]
-		clock = SYS_FREQ_IRCOSC;
+	  case CLK_SRC_IRCOSC:	// 0: 12[MHz]
+		clock = CLK_FREQ_IRCOSC;
 		break;
 
-	  case SYS_CLKSRC_PLLIN:	// 1: 12[MHz]
+	  case CLK_SRC_PLLIN:	// 1: 12[MHz]
 		clock = GetSysPLLClock();
 		break;
 
-	  case SYS_CLKSRC_WDTOSC:	// 2: 9375[Hz]
+	  case CLK_SRC_WDTOSC:	// 2: 9375[Hz]
 		clock = GetWDTClock();
 		break;
 
-	  case SYS_CLKSRC_PLLOUT:	// 3: 72[MHz]
+	  case CLK_SRC_PLLOUT:	// 3: 72[MHz]
 		// 3.5.3 System PLL control register (SYSPLLCTRL)
 		// Bit 4:0 (MSEL) Feedback divider value (The division is MSEL + 1)
 		clock = (LPC_SYSCON->SYSPLLCTRL & 0x1F) + 1;

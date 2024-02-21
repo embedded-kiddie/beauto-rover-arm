@@ -8,7 +8,7 @@
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "adc.h"
 #include "pwm.h"
 #include "trace.h"
@@ -369,7 +369,7 @@ static void TRACE_RUN4(void) {
  *----------------------------------------------------------------------*/
 void TRACE_RUN(int runType) {
 	TIMER_INIT();	// WAIT()
-	PORT_INIT();	// SW_STANDBY()
+	GPIO_INIT();	// SW_STANDBY()
 	ADC_INIT();		// A/D変換の初期化
 	PWM_INIT();		// PWM出力の初期化
 

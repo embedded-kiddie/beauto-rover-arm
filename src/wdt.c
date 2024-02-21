@@ -12,7 +12,7 @@
 #endif
 
 #include "type.h"
-#include "sys.h"
+#include "clk.h"
 #include "wdt.h"
 
 /*----------------------------------------------------------------------
@@ -23,7 +23,7 @@
  *----------------------------------------------------------------------*/
 #define	WDT_OSC_FREQ	(WDT_FREQSEL_t)(1)	// WDT_FREQSEL_0_60 (0.6MHz)
 #define	WDT_OSC_DIV		64					// 2 × (1 + DIVSEL) = 64
-#define	WDT_CLKSRC		SYS_CLKSRC_WDTOSC	// watchdog oscillator
+#define	WDT_CLKSRC		CLK_SRC_WDTOSC		// watchdog oscillator
 
 /*----------------------------------------------------------------------
  * WatchDog Timer debug configuration
@@ -220,7 +220,7 @@ void WDT_IRQHandler(void) {
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "play.h"
 #include "wdt.h"
 
@@ -283,7 +283,7 @@ void WDT_EXAMPLE(int exampleType) {
 	const MusicScore_t m[] = {{Fa6, N16}, {Fa5, N16}};
 
 	TIMER_INIT();	// WAIT()
-	PORT_INIT();	// LED_TOGGLE()
+	GPIO_INIT();	// LED_TOGGLE()
 	WDT_INIT();
 
 	// 再起動を知らせる短音

@@ -16,8 +16,8 @@ int main(void) {
 	 * 汎用I/Oポートの動作確認
 	 * - スイッチ監視とLED点滅
 	 *-----------------------------------------*/
-	extern void PORT_EXAMPLE(void);
-	PORT_EXAMPLE();
+	extern void GPIO_EXAMPLE(void);
+	GPIO_EXAMPLE();
 
 #elif	0
 	/*-----------------------------------------

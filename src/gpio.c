@@ -12,7 +12,7 @@
 #endif
 
 #include "type.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "timer.h"
 #include "play.h"
 
@@ -51,7 +51,7 @@ unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit)
 /*----------------------------------------------------------------------
  * GPIOの初期化
  *----------------------------------------------------------------------*/
-void PORT_INIT(void) {
+void GPIO_INIT(void) {
 	SetGpioDir(LPC_GPIO0, GPIO_BIT_LED1, 1);	// PIO0 ビット3（LED1：橙）を出力に設定
 	SetGpioDir(LPC_GPIO0, GPIO_BIT_LED2, 1);	// PIO0 ビット7（LED2：緑）を出力に設定
 	SetGpioDir(LPC_GPIO0, GPIO_BIT_SW1,  0);	// PIO0 ビット1（SW1）を入力に設定
@@ -298,7 +298,7 @@ void SW_WATCH(void (*f)(void)) {
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 
 /*----------------------------------------------------------------------
  * whileループを抜ける処理（割り込みハンドラから呼び出される想定）
@@ -312,9 +312,9 @@ void ExitLoop(void) {
 /*----------------------------------------------------------------------
  * 汎用I/Oポートの動作例
  *----------------------------------------------------------------------*/
-void PORT_EXAMPLE(void) {
+void GPIO_EXAMPLE(void) {
 	TIMER_INIT();			// WAIT()
-	PORT_INIT();			// SW_STANDBY()
+	GPIO_INIT();			// SW_STANDBY()
 	PLAY_INIT();			// SHOW_VALUE() で短音を鳴らす
 
 	LED(LED1|LED2);			// LED1とLED2を点灯させる

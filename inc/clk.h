@@ -1,13 +1,13 @@
 /*===============================================================================
- * Name        : sys.h
+ * Name        : clk.h
  * Author      : $(author)
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343
  * Copyright   : $(copyright)
- * Description : System internal definitions
+ * Description : Microcontroller internal clock definitions
  *===============================================================================*/
-#ifndef _SYS_H_
-#define _SYS_H_
+#ifndef _MCU_H_
+#define _MCU_H_
 
 /*----------------------------------------------------------------------
  * メインクロックの発信源、即ちクロック周波数を変更した場合、タイマーのプリスケール値も
@@ -40,14 +40,14 @@ typedef enum {
 // 3.5.11 System PLL clock source select register (SYSPLLCLKSEL)
 // 3.5.15 Main clock source select register (MAINCLKSEL)
 // 3.5.27 WDT clock source select register (WDTCLKSEL)
-#define	SYS_CLKSRC_IRCOSC	0	// IRC oscillator (12[HMz])
-#define	SYS_CLKSRC_PLLIN	1	// Input clock to system PLL (12[HMz])
-#define	SYS_CLKSRC_WDTOSC	2	// WDT oscillator (9375[Hz])
-#define	SYS_CLKSRC_PLLOUT	3	// System PLL clock out (72[HMz])
+#define	CLK_SRC_IRCOSC	0	// IRC oscillator (12[HMz])
+#define	CLK_SRC_PLLIN	1	// Input clock to system PLL (12[HMz])
+#define	CLK_SRC_WDTOSC	2	// WDT oscillator (9375[Hz])
+#define	CLK_SRC_PLLOUT	3	// System PLL clock out (72[HMz])
 
 // Internal oscillator frequency
-#define SYS_FREQ_IRCOSC		(12000000UL)
-#define SYS_FREQ_PLLIN		(12000000UL)
+#define CLK_FREQ_IRCOSC	(12000000UL)
+#define CLK_FREQ_PLLIN	(12000000UL)
 
 /*----------------------------------------------------------------------
  *
@@ -104,4 +104,4 @@ extern void SetPowerDownAwake(unsigned long mask);
 extern void DelPowerDownRun(unsigned long mask);
 extern void AddPowerDownRun(unsigned long mask);
 
-#endif // _SYS_H_
+#endif // _MCU_H_

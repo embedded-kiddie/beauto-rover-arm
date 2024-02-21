@@ -12,8 +12,8 @@
 #endif
 
 #include "type.h"
+#include "gpio.h"
 #include "pwm.h"
-#include "ioport.h"
 
 /*----------------------------------------------------------------------
  * 左右駆動系のバラツキを補正する係数[%]
@@ -189,7 +189,7 @@ void PWM_OUT(short L, short R) {
  *===============================================================================*/
 #include "type.h"
 #include "timer.h"
-#include "ioport.h"
+#include "gpio.h"
 #include "pwm.h"
 
 /*----------------------------------------------------------------------
@@ -254,7 +254,7 @@ void PWM_EXAMPLE2(void) {
  *----------------------------------------------------------------------*/
 void PWM_EXAMPLE(int exampleType) {
 	TIMER_INIT();	// WAIT()
-	PORT_INIT();	// SW_CLICK(), LED()
+	GPIO_INIT();	// SW_CLICK(), LED()
 	PWM_INIT();		// PWM出力の初期化
 
 	// スイッチが押されるまで待機
