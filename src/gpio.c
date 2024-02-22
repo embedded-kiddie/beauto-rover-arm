@@ -49,6 +49,103 @@ unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit)
 #endif // GetGpioBit
 
 /*----------------------------------------------------------------------
+ * 割込み処理用テーブル
+ *----------------------------------------------------------------------*/
+static GPIO_IRQ_t irqTable[4] = {
+	{LPC_GPIO0, EINT0_IRQn, 0, 0},
+	{LPC_GPIO1, EINT1_IRQn, 0, 0},
+	{LPC_GPIO2, EINT2_IRQn, 0, 0},
+	{LPC_GPIO3, EINT3_IRQn, 0, 0},
+};
+
+/*----------------------------------------------------------------------
+ * 割り込みによるポートの監視設定
+ * - Note: 呼び出し前に指定ポートのピンを「入力」に設定すること
+ *
+ * Definition General Purpose Input/Output (GPIO) in LPC13xx.h
+ * typedef struct {
+ *   ...
+ *   __IO uint32_t DIR;  9.4.2 GPIO data direction register
+ *   __IO uint32_t IS;   9.4.3 GPIO interrupt sense register
+ *   __IO uint32_t IBE;  9.4.4 GPIO interrupt both edges sense register
+ *   __IO uint32_t IEV;  9.4.5 GPIO interrupt event register
+ *   __IO uint32_t IE;   9.4.6 GPIO interrupt mask register
+ *   __IO uint32_t RIS;  9.4.7 GPIO raw interrupt status register
+ *   __IO uint32_t MIS;  9.4.8 GPIO masked interrupt status register
+ *   __IO uint32_t IC;   9.4.9 GPIO interrupt clear register
+ * } LPC_GPIO_TypeDef;
+ *----------------------------------------------------------------------*/
+void SetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void)) {
+	__IO LPC_GPIO_TypeDef* port = irqTable[portNo].port;
+
+	// 監視するビットと実行する関数を登録
+	irqTable[portNo].pin = pin;
+	irqTable[portNo].function = f;
+
+	// 9.4.3 GPIO interrupt sense register (GPIO0IS)
+	// 0 = Interrupt on pin PIOn_x is configured as edge sensitive.
+	port->IS &= ~(1 << pin);
+
+	// 9.4.4 GPIO interrupt both edges sense register (GPIO0IBE)
+	// 0 = Interrupt on pin PIOn_x is controlled through register GPIOIEV.
+	port->IBE &= ~(1 << pin);
+
+	// 9.4.5 GPIO interrupt event register (GPIO0IEV)
+	// 1 = Depending on setting in register GPIOIS, rising edges
+	// or HIGH level on pin PIOn_x trigger an interrupt.
+	port->IEV |= (1 << pin);
+
+	// 9.4.6 GPIO interrupt mask register (GPIO0IE)
+	// 1 = Interrupt on pin PIOn_x is not masked.
+	port->IE |= (1 << pin);
+
+	// 9.4.9 GPIO interrupt clear register (GPIO0IC)
+	// 1 = Clears edge detection logic for pin PIOn_x.
+	port->IC |= (1 << pin);
+
+	// IRQn_Type is defined in LPC13xx.h
+	NVIC_EnableIRQ(irqTable[portNo].irqNo);
+}
+
+/*----------------------------------------------------------------------
+ * 外部割込みの処理
+ *----------------------------------------------------------------------*/
+static void IrqHandler(int portNo) {
+	__IO LPC_GPIO_TypeDef *port = irqTable[portNo].port;
+
+	// 9.4.7 GPIO raw interrupt status register (GPIO0RIS)
+	// 1 = Interrupt requirements met on PIOn_x.
+	if (port->RIS & (1 << irqTable[portNo].pin)) {
+		// チャタリングによる多重割り込みを防止する
+		NVIC_DisableIRQ(irqTable[portNo].irqNo);
+
+		// 登録された関数を呼び出す
+		if (irqTable[portNo].function) {
+			irqTable[portNo].function();
+		}
+
+		// 9.4.9 GPIO interrupt clear register (GPIO0IC)
+		// 1 = Clears edge detection logic for pin PIOn_x.
+		port->IC |= (1 << irqTable[portNo].pin);
+
+		// Remark: The synchronizer between the GPIO and the NVIC blocks
+		// causes a delay of 2 clocks. It is recommended to add two NOPs
+		// after the clear of the interrupt edge detection logic before
+		// the exit of the interrupt service routine.
+		__NOP();
+		__NOP();
+	}
+}
+
+/*----------------------------------------------------------------------
+ * 外部割込みハンドラ
+ *----------------------------------------------------------------------*/
+void PIOINT0_IRQHandler(void) { IrqHandler(0); }
+void PIOINT1_IRQHandler(void) { IrqHandler(1); }
+void PIOINT2_IRQHandler(void) { IrqHandler(2); }
+void PIOINT3_IRQHandler(void) { IrqHandler(3); }
+
+/*----------------------------------------------------------------------
  * GPIOの初期化
  *----------------------------------------------------------------------*/
 void GPIO_INIT(void) {
@@ -144,6 +241,13 @@ int SW_STANDBY(void) {
 }
 
 /*----------------------------------------------------------------------
+ * スイッチの立ち上がりエッジ（押されてから離された時）で実行する関数を登録する
+ *----------------------------------------------------------------------*/
+void SW_WATCH(void (*f)(void)) {
+	SetInterrupt(0, GPIO_BIT_SW1, 0, 0, f);
+}
+
+/*----------------------------------------------------------------------
  * スイッチが短くクリックされたらONを、長押しされた場合はHOLDを返す
  *----------------------------------------------------------------------*/
 int SW_CLICK_HOLD(unsigned long msec) {
@@ -188,7 +292,7 @@ void SHOW_VALUE(long val) {
 			int v = (val >> i);
 			// LED1: 上位ビット、LED2: 下位ビット
 			LED((v & 0x02 ? LED1 : LED_OFF) | (v & 0x01 ? LED2: LED_OFF));
-			PLAY(m, 1, 155, 0);
+			PLAY(m, 1, 180, 0);
 			SW_STANDBY();
 			WAIT(100);
 		}
@@ -209,86 +313,12 @@ void SHOW_VALUE(long val) {
 			  case SW_HOLD:
 			  default:
 				LED(LED_OFF);
-				PLAY(m, 2, 155, 0);
+				PLAY(m, 2, 180, 0);
 				WAIT(1000);
 				return;
 			}
 		}
 	}
-}
-
-/*----------------------------------------------------------------------
- * 割り込みによるスイッチの監視
- *
- * Definition General Purpose Input/Output (GPIO) in LPC13xx.h
- * typedef struct {
- *   ...
- *   __IO uint32_t DIR;  9.4.2 GPIO data direction register
- *   __IO uint32_t IS;   9.4.3 GPIO interrupt sense register
- *   __IO uint32_t IBE;  9.4.4 GPIO interrupt both edges sense register
- *   __IO uint32_t IEV;  9.4.5 GPIO interrupt event register
- *   __IO uint32_t IE;   9.4.6 GPIO interrupt mask register
- *   __IO uint32_t RIS;  9.4.7 GPIO raw interrupt status register
- *   __IO uint32_t MIS;  9.4.8 GPIO masked interrupt status register
- *   __IO uint32_t IC;   9.4.9 GPIO interrupt clear register
- * } LPC_GPIO_TypeDef;
- *----------------------------------------------------------------------*/
-static void (*SW_IRQHandler)(void) = 0;
-
-void PIOINT0_IRQHandler(void) {
-	// 9.4.7 GPIO raw interrupt status register (GPIO0RIS)
-	// 1 = Interrupt requirements met on PIOn_x.
-	if (LPC_GPIO0->RIS & (1 << GPIO_BIT_SW1)) {
-		NVIC_DisableIRQ(EINT0_IRQn); // チャタリングによる多重割り込みを防止する
-
-		// 登録された関数を呼び出す
-		if (SW_IRQHandler) {
-			SW_IRQHandler();
-		}
-
-		// 9.4.9 GPIO interrupt clear register (GPIO0IC)
-		// 1 = Clears edge detection logic for pin PIOn_x.
-		LPC_GPIO0->IC |= (1 << GPIO_BIT_SW1);
-
-		// Remark: The synchronizer between the GPIO and the NVIC blocks
-		// causes a delay of 2 clocks. It is recommended to add two NOPs
-		// after the clear of the interrupt edge detection logic before
-		// the exit of the interrupt service routine.
-		__NOP();
-		__NOP();
-	}
-}
-
-/*----------------------------------------------------------------------
- * スイッチの立ち上がりエッジ（押されてから離された時）で実行する関数を登録する
- *----------------------------------------------------------------------*/
-void SW_WATCH(void (*f)(void)) {
-	// 実行する関数を登録
-	SW_IRQHandler = f;
-
-	// 9.4.3 GPIO interrupt sense register (GPIO0IS)
-	// 0 = Interrupt on pin PIOn_x is configured as edge sensitive.
-	LPC_GPIO0->IS &= ~(1 << GPIO_BIT_SW1);
-
-	// 9.4.4 GPIO interrupt both edges sense register (GPIO0IBE)
-	// 0 = Interrupt on pin PIOn_x is controlled through register GPIOIEV.
-	LPC_GPIO0->IBE &= ~(1 << GPIO_BIT_SW1);
-
-	// 9.4.5 GPIO interrupt event register (GPIO0IEV)
-	// 1 = Depending on setting in register GPIOIS, rising edges
-	// or HIGH level on pin PIOn_x trigger an interrupt.
-	LPC_GPIO0->IEV |= (1 << GPIO_BIT_SW1);
-
-	// 9.4.6 GPIO interrupt mask register (GPIO0IE)
-	// 1 = Interrupt on pin PIOn_x is not masked.
-	LPC_GPIO0->IE |= (1 << GPIO_BIT_SW1);
-
-	// 9.4.9 GPIO interrupt clear register (GPIO0IC)
-	// 1 = Clears edge detection logic for pin PIOn_x.
-	LPC_GPIO0->IC |= (1 << GPIO_BIT_SW1);
-
-	// EINT0_IRQn: IRQn_Type is defined in LPC13xx.h
-	NVIC_EnableIRQ(EINT0_IRQn);
 }
 
 #ifdef	EXAMPLE

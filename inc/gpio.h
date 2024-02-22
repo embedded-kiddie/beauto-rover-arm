@@ -28,6 +28,24 @@ extern unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
 #endif
 
 /*----------------------------------------------------------------------
+ * GPIO Interrupt Handler
+ * 9.4.3 GPIO interrupt sense register
+ * 9.4.4 GPIO interrupt both edges sense register
+ * 9.4.5 GPIO interrupt event register
+ *----------------------------------------------------------------------*/
+extern void SetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void));
+
+/*----------------------------------------------------------------------
+ * 割込み処理用テーブル
+ *----------------------------------------------------------------------*/
+typedef struct {
+	__IO LPC_GPIO_TypeDef* port;	// GPIOポートアドレス
+	IRQn_Type irqNo;				// 割込みNo
+	uint32_t pin;					// 割込みを監視するピン
+	void (*function)(void);			// 割込み発生時に実行する関数
+} GPIO_IRQ_t;
+
+/*----------------------------------------------------------------------
  * GPIOの初期化
  *----------------------------------------------------------------------*/
 extern void GPIO_INIT(void);
