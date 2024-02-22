@@ -13,6 +13,7 @@
 
 #include "type.h"
 #include "clk.h"
+#include "pmu.h"
 #include "wdt.h"
 
 /*----------------------------------------------------------------------
@@ -59,7 +60,7 @@ void WDT_INIT(void) {
 
 	// Keep Watchdog oscillator powered in sleep mode and deep-sleep mode
 	// 18.6 Clocking and power control
-	AddPowerDownRun(PDRUNCFG_WDTOSC);
+	AddPowerDownRun(PDRUNCFG_WDTOSC); // defined in Power Management Unit
 
 	// Setup Watchdog oscillator before attaching to the clock source
 	// 3.5.8 Watchdog oscillator control register (WDTOSCCTRL)

@@ -31,15 +31,57 @@
 /*----------------------------------------------------------------------
  * Deep-sleep mode からの復帰方法
  *----------------------------------------------------------------------*/
-#define	INTERNAL_TIMER		0	// 内部割込み：タイマー（CT32B1）
-#define	EXTERNAL_SWITCH		1	// 外部割込み：スイッチ（SW1）
-#define	INTERRUPT_FROM		0	// 0 = タイマー（CT32B1）, 1 = スイッチ（SW1）
+#define	INTERNAL_TIMER		(0)	// 内部割込み：タイマー（CT32B1）
+#define	EXTERNAL_SWITCH		(1)	// 外部割込み：スイッチ（SW1）
+#define	INTERRUPT_FROM		INTERNAL_TIMER
 
 /*----------------------------------------------------------------------
  *
  *----------------------------------------------------------------------*/
 static unsigned long pwmInterval  = 0;
 static unsigned char pwmWakeupPin = 0;
+
+/*----------------------------------------------------------------------
+ * Deep-sleep モード時のウォッチドッグOSCと電圧低下検知回路（BOD）の動作を設定する
+ *----------------------------------------------------------------------*/
+void SetPowerDownSleep(unsigned long mask) {
+	// 3.5.45 Deep-sleep mode configuration register (PDSLEEPCFG)
+	LPC_SYSCON->PDSLEEPCFG = ((PDSLEEPCFG_FIXEDVAL) & ~(PDSLEEPCFG_MASK)) | ((~mask) & PDSLEEPCFG_MASK);
+}
+
+/*----------------------------------------------------------------------
+ * Deep-sleep モード復帰時に駆動する周辺回路を設定する
+ *----------------------------------------------------------------------*/
+void SetPowerDownAwake(unsigned long mask) {
+	// 3.5.46 Wake-up configuration register (PDAWAKECFG)
+	LPC_SYSCON->PDAWAKECFG = PDAWAKECFG_FIXEDVAL | ((~mask) & PDAWAKECFG_MASK);
+}
+
+/*----------------------------------------------------------------------
+ * パワーダウン時に駆動しない周辺回路を設定する
+ *----------------------------------------------------------------------*/
+void DelPowerDownRun(unsigned long mask) {
+	unsigned long pdruncfg;
+
+	// 3.5.47 Power-down configuration register (PDRUNCFG)
+	pdruncfg = LPC_SYSCON->PDRUNCFG & PDRUNCFG_MASK;
+	pdruncfg |= (mask & PDRUNCFG_MASK);
+
+	LPC_SYSCON->PDRUNCFG = (pdruncfg | PDRUNCFG_FIXEDVAL);
+}
+
+/*----------------------------------------------------------------------
+ * パワーダウン時に駆動する周辺回路を設定する
+ *----------------------------------------------------------------------*/
+void AddPowerDownRun(unsigned long mask) {
+	unsigned long pdruncfg;
+
+	// 3.5.47 Power-down configuration register (PDRUNCFG)
+	pdruncfg = LPC_SYSCON->PDRUNCFG & PDRUNCFG_MASK;
+	pdruncfg &= ~(mask & PDRUNCFG_MASK);
+
+	LPC_SYSCON->PDRUNCFG = (pdruncfg | PDRUNCFG_FIXEDVAL);
+}
 
 /*----------------------------------------------------------------------
  * スリープから復帰したときの割込みハンドラ
@@ -138,7 +180,7 @@ static void DeepSleepMode() {
 	// 3.5.39 Start logic reset register 0 (STARTRSRP0CLR)
 	// 3.5.38 Start logic signal enable register 0 (STARTERP0)
 	// 7.4.30 IOCON_R_PIO1_1 (R/PIO1_1/AD2/CT32B1_MAT0)
-	pwmWakeupPin = 13;
+	pwmWakeupPin = 13; // bit 12 = PIO1_0, ..., bit 23 = PIO1_11
 	LPC_SYSCON->STARTAPRP0    &= ~(1 << pwmWakeupPin);	// PIO1_1 Falling edge
 	LPC_SYSCON->STARTRSRP0CLR |=  (1 << pwmWakeupPin);	// PIO1_1 Clear pending bit
 	LPC_SYSCON->STARTERP0     |=  (1 << pwmWakeupPin);	// PIO1_1 Enable Start Logic
@@ -178,7 +220,7 @@ static void DeepSleepMode() {
 	// 3.5.39 Start logic reset register 0 (STARTRSRP0CLR)
 	// 3.5.38 Start logic signal enable register 0 (STARTERP0)
 	// 7.4.4 IOCON_PIO0_1 (PIO0_1/CLKOUT/ 0xD0 CT32B0_MAT2/USB_FTOGGLE)
-	pwmWakeupPin = 1;
+	pwmWakeupPin = 1; // PIO0_1:SW1 = GPIO_BIT_SW1
 	LPC_SYSCON->STARTAPRP0    &= ~(1 << pwmWakeupPin);	// PIO0_1 Falling edge
 	LPC_SYSCON->STARTRSRP0CLR |=  (1 << pwmWakeupPin);	// PIO0_1 Clear pending bit
 	LPC_SYSCON->STARTERP0     |=  (1 << pwmWakeupPin);	// PIO0_1 Enable Start Logic
@@ -354,7 +396,7 @@ void PMU_EXAMPLE(int exampleType) {
 
 	// 再起動を知らせる短音
 	PLAY_INIT();
-	PLAY(m, 2, 155, 0);
+	PLAY(m, 2, 180, 0);
 	while (IS_PLAYING());
 
 #if	PMU_DEBUG
