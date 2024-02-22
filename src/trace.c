@@ -399,10 +399,10 @@ void TRACE_RUN(int runMode) {
 	t0 = TIMER_READ();
 	while (SW_SCAN() == SW_ON) {
 		t1 = TIMER_READ();
-		if (t1 - t0 == 4000) {PLAY(&ms, 1, 180, 0); runMode = 4;} else
-		if (t1 - t0 == 3000) {PLAY(&ms, 1, 180, 0); runMode = 3;} else
+		if (t1 - t0 == 1000) {PLAY(&ms, 1, 180, 0); runMode = 1;} else
 		if (t1 - t0 == 2000) {PLAY(&ms, 1, 180, 0); runMode = 2;} else
-		if (t1 - t0 == 1000) {PLAY(&ms, 1, 180, 0); runMode = 1;}
+		if (t1 - t0 == 3000) {PLAY(&ms, 1, 180, 0); runMode = 3;} else
+		if (t1 - t0 == 4000) {PLAY(&ms, 1, 180, 0); runMode = 4;}
 	}
 
 	// 少し待ってからスタート
