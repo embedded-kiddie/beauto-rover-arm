@@ -33,11 +33,13 @@
  * 赤外線センサ値の正規化
  *----------------------------------------------------------------------*/
 #if	(CALIBRATION_METHOD == 1)
-#define	NormalizeL(L, c)	(((L) - c.offsetL) * c.gainL / 100)
-#define	NormalizeR(R, c)	(((R) - c.offsetR) * c.gainR / 100)
+// 左右差を校正する
+#define	NormalizeL(L, c)	(((L) - (c).offsetL) * (c).gainL / 100)
+#define	NormalizeR(R, c)	(((R) - (c).offsetR) * (c).gainR / 100)
 #else
-#define	NormalizeL(L, c)	((L) - c.offsetL)
-#define	NormalizeR(R, c)	((R) - c.offsetR)
+// 左右差は校正しない
+#define	NormalizeL(L, c)	((L) - (c).offset)
+#define	NormalizeR(R, c)	((R) + (c).offset)
 #endif
 
 /*----------------------------------------------------------------------
