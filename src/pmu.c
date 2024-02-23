@@ -36,13 +36,15 @@
 #define	INTERRUPT_FROM		INTERNAL_TIMER
 
 /*----------------------------------------------------------------------
- *
+ * スリープ復帰時の設定項目
  *----------------------------------------------------------------------*/
-static unsigned long pwmInterval  = 0;
-static unsigned char pwmWakeupPin = 0;
+static unsigned long pwmInterval  = 0;	// 次の割り込みまでの時間[msec]
+static unsigned char pwmWakeupPin = 0;	// 復帰のトリガとなったGPIOピン
 
 /*----------------------------------------------------------------------
  * Deep-sleep モード時のウォッチドッグOSCと電圧低下検知回路（BOD）の動作を設定する
+ * - mask
+ *	PDSLEEPCFG_BOD ～ PDSLEEPCFG_WDTOSC
  *----------------------------------------------------------------------*/
 void pmuSetPowerDownSleep(unsigned long mask) {
 	// 3.5.45 Deep-sleep mode configuration register (PDSLEEPCFG)
@@ -51,6 +53,8 @@ void pmuSetPowerDownSleep(unsigned long mask) {
 
 /*----------------------------------------------------------------------
  * Deep-sleep モード復帰時に駆動する周辺回路を設定する
+ * - mask
+ *	PDAWAKECFG_IRCOUT ～ PDAWAKECFG_USBPAD
  *----------------------------------------------------------------------*/
 void pmuSetPowerDownAwake(unsigned long mask) {
 	// 3.5.46 Wake-up configuration register (PDAWAKECFG)
@@ -59,6 +63,8 @@ void pmuSetPowerDownAwake(unsigned long mask) {
 
 /*----------------------------------------------------------------------
  * パワーダウン時に駆動しない周辺回路を設定する
+ * - mask
+ *	PDRUNCFG_IRCOUT ～ PDRUNCFG_USBPAD
  *----------------------------------------------------------------------*/
 void pmuDelPowerDownRun(unsigned long mask) {
 	unsigned long pdruncfg;
@@ -72,6 +78,8 @@ void pmuDelPowerDownRun(unsigned long mask) {
 
 /*----------------------------------------------------------------------
  * パワーダウン時に駆動する周辺回路を設定する
+ * - mask
+ *	PDRUNCFG_IRCOUT ～ PDRUNCFG_USBPAD
  *----------------------------------------------------------------------*/
 void pmuAddPowerDownRun(unsigned long mask) {
 	unsigned long pdruncfg;
