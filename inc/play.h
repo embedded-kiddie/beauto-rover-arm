@@ -88,10 +88,10 @@ typedef struct {
 /*----------------------------------------------------------------------
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
-extern void PLAY_INIT(void);
-extern void PLAY(const MusicScore_t *score, int num, int tempo, int loop);
-extern void PLAY_STOP(void);
-extern int IS_PLAYING(void);
+extern void playInit(void);
+extern void playScore(const MusicScore_t *score, int num, int tempo, int loop);
+extern void playStop(void);
+extern int playIsPlaying(void);
 
 #if	PLAY_MODE == PLAY_PWM_WRC103
 extern void BuzzerSet(unsigned char pitch, unsigned char vol);
@@ -475,11 +475,11 @@ extern unsigned char isBuzzer(void);
 /*===============================================================================
  * バックグラウンド演奏の動作確認
  * - フォアグラウンドでLチカ
- * - フォアグラウンド演奏としたい場合は、以下の様に IS_PLAYING() でブロックする
- *	PLAY(...);
- *	while (IS_PLAYING());
+ * - フォアグラウンド演奏としたい場合は、以下の様に playIsPlaying() でブロックする
+ *	playScore(...);
+ *	while (playIsPlaying());
  *===============================================================================*/
-extern void PLAY_EXAMPLE(void);
+extern void playExample(void);
 #endif // EXAMPLE
 
 #endif // _PLAY_H_

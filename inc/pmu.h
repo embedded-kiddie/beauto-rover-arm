@@ -20,8 +20,8 @@
 /*----------------------------------------------------------------------
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
-extern void PMU_WAKEUP(unsigned long msec);
-extern unsigned int PMU_SLEEP(int mode);
+extern void pmuWakeup(unsigned long msec);
+extern unsigned int pmuSleep(int mode);
 
 /*----------------------------------------------------------------------
  * パワーマネジメント対象を表すマスクの定義
@@ -63,10 +63,10 @@ extern unsigned int PMU_SLEEP(int mode);
 /*----------------------------------------------------------------------
  * パワーマネジメント対象を設定する関数
  *----------------------------------------------------------------------*/
-extern void SetPowerDownSleep(unsigned long mask);
-extern void SetPowerDownAwake(unsigned long mask);
-extern void DelPowerDownRun(unsigned long mask);
-extern void AddPowerDownRun(unsigned long mask);
+extern void pmuSetPowerDownSleep(unsigned long mask);
+extern void pmuSetPowerDownAwake(unsigned long mask);
+extern void pmuDelPowerDownRun(unsigned long mask);
+extern void pmuAddPowerDownRun(unsigned long mask);
 
 #ifdef	EXAMPLE
 /*===============================================================================
@@ -76,7 +76,7 @@ extern void AddPowerDownRun(unsigned long mask);
  *	1: Active mode　でのスリープ
  *	2: Sleep/Deep-sleep/Deep Power-down
  *===============================================================================*/
-extern void PMU_EXAMPLE(int exampleType);
+extern void pmuExample(int exampleType);
 #endif // EXAMPLE
 
 #endif // _PMU_H_

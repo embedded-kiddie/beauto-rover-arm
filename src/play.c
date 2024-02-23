@@ -45,11 +45,11 @@ static int playRest = 0;
 /*----------------------------------------------------------------------
  * I/Oポート、タイマの初期化
  *----------------------------------------------------------------------*/
-void PLAY_INIT(void) {
+void playInit(void) {
 	/*-----------------------------------------
 	 * I/O Configuration
 	 *-----------------------------------------*/
-	SetGpioDir(LPC_GPIO1, 8, 1);	// PIO1 ビット8（ブザー）を出力に設定
+	gpioSetDir(LPC_GPIO1, 8, 1);	// PIO1 ビット8（ブザー）を出力に設定
 
 	// Selects function PIO1_8, no pull-down/pull-up,
 	// Hysteresis disable, Standard GPIO output
@@ -116,7 +116,7 @@ void PLAY_INIT(void) {
 /*----------------------------------------------------------------------
  * 音符長のための割込み回数を算出する
  *----------------------------------------------------------------------*/
-static int CalcInterval(const MusicScore_t *score) {
+static int calcInterval(const MusicScore_t *score) {
 #if	PLAY_MODE == PLAY_TIMER_MODE
 
 	/*-------------------------------------------------------------------
@@ -184,14 +184,14 @@ static int CalcInterval(const MusicScore_t *score) {
  * tempo: 演奏する速さ（1分間に入る四分音符の数、メトロノーム記号）
  * loop : 0 = 繰り返し再生なし、0以外: loop[msec]後に再生を繰り返す
  *----------------------------------------------------------------------*/
-void PLAY(const MusicScore_t *score, int num, int tempo, int loop) {
+void playScore(const MusicScore_t *score, int num, int tempo, int loop) {
 	unsigned long pitch;
 
 	// バックグラウンド再生の設定
 	scoreNum = num;
 	scorePtr = score;
 	baseTempo = tempo ? tempo : PLAY_BASE_TEMPO;
-	countIRQ = CalcInterval(score);
+	countIRQ = calcInterval(score);
 
 	// 繰り返し再生の設定
 	loopPlay = loop; // [msec]
@@ -235,7 +235,7 @@ void PLAY(const MusicScore_t *score, int num, int tempo, int loop) {
 /*----------------------------------------------------------------------
  * 演奏を停止する
  *----------------------------------------------------------------------*/
-void PLAY_STOP(void) {
+void playStop(void) {
 	// 6.6.4 Interrupt Clear-Enable Register 1 register
 	// Bit 11 (ICE_CT32B0): Disable timer CT32B0 interrupt
 	// Note: NVIC = Nested Vectored Interrupt Controller
@@ -260,18 +260,18 @@ void PLAY_STOP(void) {
 /*----------------------------------------------------------------------
  * 再生中か調べる
  *----------------------------------------------------------------------*/
-int IS_PLAYING(void) {
+int playIsPlaying(void) {
 	return LPC_TMR32B0->TCR & 1;
 }
 
 /*----------------------------------------------------------------------
  * 指定時間[msec]分のインターバルをとる
  *----------------------------------------------------------------------*/
-static void PlayInterval(int msec) {
+static void playInterval(int msec) {
 	const MusicScore_t interval = {Do5, N0};
 
 	scorePtr = 0;
-	countIRQ = CalcInterval(&interval) * msec * baseTempo / (1000 * 90);
+	countIRQ = calcInterval(&interval) * msec * baseTempo / (1000 * 90);
 
 #if	PLAY_MODE == PLAY_TIMER_MODE
 	playRest = 1;
@@ -304,19 +304,19 @@ void TIMER32_0_IRQHandler(void) {
 	// 規定回数（countIRQ）分のPWMサイクル実行後に再生を停止し、楽譜データを進める
 	// 楽譜データを最後まで再生した後に、指定時間（loop[msec]）後に再生を再開する
 	if (IR & (1 << 3) && --countIRQ <= 0) {
-		PLAY_STOP();
+		playStop();
 
 		if (scorePtr) {
 			if (--scoreNum > 0) {
 				// 楽譜データを次に進める
-				PLAY(scorePtr + 1, scoreNum, baseTempo, loopPlay);
+				playScore(scorePtr + 1, scoreNum, baseTempo, loopPlay);
 			} else if (loopPlay) {
 				// 指定時間（loopPlay[msec]）だけインターバルをとる
-				PlayInterval(loopPlay);
+				playInterval(loopPlay);
 			}
 		} else {
 			// インターバル後（scorePtr=0 かつ countIRQ=0）に元データを設定し、再生を再開する
-			PLAY(loopPtr, loopNum, baseTempo, loopPlay);
+			playScore(loopPtr, loopNum, baseTempo, loopPlay);
 		}
 	}
 
@@ -325,7 +325,7 @@ void TIMER32_0_IRQHandler(void) {
 	// Toggle output
 	else {
 		// playRest=1の場合は無音にする
-		SetGpioBit(LPC_GPIO1, 8, (playRest ? (toggle = 0) : (toggle = !toggle)));
+		gpioSetBit(LPC_GPIO1, 8, (playRest ? (toggle = 0) : (toggle = !toggle)));
 	}
 
 #else // PLAY_MODE == PLAY_PWM_MODE
@@ -334,14 +334,14 @@ void TIMER32_0_IRQHandler(void) {
 	// scorePtr=0 または scorePtr->pitch=0 の場合は無音となる
 	else if (LPC_TMR32B0->MR2 < LPC_TMR32B0->MR3) {
 		if (scorePtr && scorePtr->pitch) {
-			SetGpioBit(LPC_GPIO1, 8, (toggle = !toggle));
+			gpioSetBit(LPC_GPIO1, 8, (toggle = !toggle));
 			LPC_TMR32B0->MR2 += playPitch;
 		}
 	}
 
 	else if (LPC_TMR32B0->MR2 == LPC_TMR32B0->MR3) {
 		if (scorePtr && scorePtr->pitch) {
-			SetGpioBit(LPC_GPIO1, 8, (toggle = !toggle));
+			gpioSetBit(LPC_GPIO1, 8, (toggle = !toggle));
 			LPC_TMR32B0->MR2 = playPitch;
 		}
 	}
@@ -404,11 +404,11 @@ void TIMER32_0_IRQHandler(void) {
 	if (bBuzzerFlag == 1) {
 		if (LPC_TMR32B0->MR2 < LPC_TMR32B0->MR3) {
 			outbitvalue = (outbitvalue + 1) & 0x01;
-			SetGpioBit(LPC_GPIO1, 8, (uint32_t) outbitvalue);
+			gpioSetBit(LPC_GPIO1, 8, (uint32_t) outbitvalue);
 			LPC_TMR32B0->MR2 += iBuzzerPitch;
 		} else if (LPC_TMR32B0->MR2 == LPC_TMR32B0->MR3) {
 			outbitvalue = (outbitvalue + 1) & 0x01;
-			SetGpioBit(LPC_GPIO1, 8, (uint32_t) outbitvalue);
+			gpioSetBit(LPC_GPIO1, 8, (uint32_t) outbitvalue);
 			LPC_TMR32B0->MR2 = iBuzzerPitch;
 		} else {
 			LPC_TMR32B0->MR2 -= LPC_TMR32B0->MR3;
@@ -446,10 +446,10 @@ unsigned char isBuzzer(void) {
 /*----------------------------------------------------------------------
  * I/Oポート、タイマの初期化
  *----------------------------------------------------------------------*/
-void PLAY_INIT(void) {
+void playInit(void) {
 	bBuzzerFlag = 0;
 
-	SetGpioDir(LPC_GPIO1, 8, 1);	//set output port pin
+	gpioSetDir(LPC_GPIO1, 8, 1);	//set output port pin
 	LPC_IOCON->PIO1_8 = 0;
 	LPC_SYSCON->SYSAHBCLKCTRL |= (1 << 9);
 
@@ -462,7 +462,7 @@ void PLAY_INIT(void) {
  * num  : 楽譜データ中の音符数
  * loop : 0: 繰り返し再生なし、0以外: loop[msec]後に再生を繰り返す
  *----------------------------------------------------------------------*/
-void PLAY(const MusicScore_t *score, int num, int tempo, int loop) {
+void playScore(const MusicScore_t *score, int num, int tempo, int loop) {
 	do {
 		int i;
 		for (i = 0; i < num; i++) {
@@ -470,24 +470,24 @@ void PLAY(const MusicScore_t *score, int num, int tempo, int loop) {
 				BuzzerSet(score[i].pitch, 128);
 				BuzzerStart();
 			}
-			WAIT((PLAY_PCLK / (2 * PLAY_PRE_SCALE * PLAY_PWM_CYCLE)) * 60 / (2 * tempo + 35) * score[i].duration);
+			timerWait((PLAY_PCLK / (2 * PLAY_PRE_SCALE * PLAY_PWM_CYCLE)) * 60 / (2 * tempo + 35) * score[i].duration);
 			BuzzerStop();
 		}
-		WAIT(loop);
+		timerWait(loop);
 	} while (loop);
 }
 
 /*----------------------------------------------------------------------
  * 演奏を停止する
  *----------------------------------------------------------------------*/
-void PLAY_STOP(void) {
+void playStop(void) {
 	BuzzerStop();
 }
 
 /*----------------------------------------------------------------------
  * 再生中か調べる
  *----------------------------------------------------------------------*/
-int IS_PLAYING(void) {
+int playIsPlaying(void) {
 	return isBuzzer();
 }
 
@@ -497,9 +497,9 @@ int IS_PLAYING(void) {
 /*===============================================================================
  * バックグラウンド演奏の動作確認
  * - フォアグラウンドでLチカ
- * - フォアグラウンド演奏としたい場合は、以下の様に IS_PLAYING() でブロックする
- *	PLAY(...);
- *	while (IS_PLAYING());
+ * - フォアグラウンド演奏としたい場合は、以下の様に playIsPlaying() でブロックする
+ *	playScore(...);
+ *	while (playIsPlaying());
  *===============================================================================*/
 #include "timer.h"
 #include "gpio.h"
@@ -508,24 +508,24 @@ int IS_PLAYING(void) {
 /*----------------------------------------------------------------------
  * バックグラウンド演奏の動作例
  *----------------------------------------------------------------------*/
-void PLAY_EXAMPLE(void) {
+void playExample(void) {
 	const MusicScore_t ms[] = {
 //#include "doremi.dat"	// tempo = PLAY_BASE_DURATION
 #include "truth.dat"	// tempo = 155
 //#include "lupin.dat"	// tempo = 132
 	};
 
-	TIMER_INIT();	// WAIT()
-	GPIO_INIT();	// LED()
-	PLAY_INIT();
+	timerInit();	// timerWait()
+	gpioInit();		// ledOn()
+	playInit();
 
 	// バックグラウンドで演奏
-	PLAY(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
+	playScore(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
 
 	// フォアグラウンドでLチカ
 	while (1) {
-		LED(LED1); WAIT(250);
-		LED(LED2); WAIT(250);
+		ledOn(LED1); timerWait(250);
+		ledOn(LED2); timerWait(250);
 	}
 }
 #endif // EXAMPLE

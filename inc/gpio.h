@@ -18,13 +18,13 @@
  * GPIO functions
  *----------------------------------------------------------------------*/
 #if		1
-#define	SetGpioDir(p, b, d)	{if((d)){(p)->DIR |=(1<<(b));}else{(p)->DIR &= ~(1<<(b));}}
-#define	SetGpioBit(p, b, v)	{(p)->MASKED_ACCESS[(1<<(b))] = ((v)<<(b));}
-#define	GetGpioBit(p, b)		((p)->MASKED_ACCESS[(1<<(b))])
+#define	gpioSetDir(p, b, d)	{if((d)){(p)->DIR |=(1<<(b));}else{(p)->DIR &= ~(1<<(b));}}
+#define	gpioSetBit(p, b, v)	{(p)->MASKED_ACCESS[(1<<(b))] = ((v)<<(b));}
+#define	gpioGetBit(p, b)	((p)->MASKED_ACCESS[(1<<(b))])
 #else
-extern void SetGpioDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir);
-extern void SetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t val);
-extern unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
+extern void gpioSetDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir);
+extern void gpioSetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t val);
+extern unsigned char gpioGetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
 #endif
 
 /*----------------------------------------------------------------------
@@ -33,7 +33,7 @@ extern unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
  * 9.4.4 GPIO interrupt both edges sense register
  * 9.4.5 GPIO interrupt event register
  *----------------------------------------------------------------------*/
-extern void SetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void));
+extern void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void));
 
 /*----------------------------------------------------------------------
  * 割込み処理用テーブル
@@ -48,7 +48,7 @@ typedef struct {
 /*----------------------------------------------------------------------
  * GPIOの初期化
  *----------------------------------------------------------------------*/
-extern void GPIO_INIT(void);
+extern void gpioInit(void);
 
 /*----------------------------------------------------------------------
  * GPIO0のビット割り付け
@@ -69,10 +69,11 @@ extern void GPIO_INIT(void);
 #define	LED_ON		(3)		// LED1、2の点灯データ
 #define LED_OFF		(0)		// LED1、2の消灯データ
 
-extern void LED(unsigned char led);
-extern void LED_TOGGLE(unsigned char led);
-extern void LED_FLUSH(unsigned long msec);
-extern void LED_BLINK(unsigned long msec);
+extern void ledOn(unsigned char led);
+extern void ledOff(unsigned char led);
+extern void ledToggle(unsigned char led);
+extern void ledFlush(unsigned long msec);
+extern void ledBlink(unsigned long msec);
 
 /*----------------------------------------------------------------------
  * プッシュスイッチの状態
@@ -85,27 +86,27 @@ extern void LED_BLINK(unsigned long msec);
 /*----------------------------------------------------------------------
  * スイッチ状態（low active）の監視
  *----------------------------------------------------------------------*/
-extern int SW_SCAN(void);		// SWの状態をスキャンする
-extern int SW_CLICK(void);		// SWをスキャンしON→OFFの立上がりを検知する
-extern int SW_STANDBY(void);	// SWが押されてから離されるまで待機する
-extern void SW_WATCH(void (*f)(void)); // 割込みの監視と処理関数の登録
+extern int swScan(void);		// SWの状態をスキャンする
+extern int swClick(void);		// SWをスキャンしON→OFFの立上がりを検知する
+extern int swStandby(void);	// SWが押されてから離されるまで待機する
+extern void swWatch(void (*f)(void)); // 割込みの監視と処理関数の登録
 
 /*----------------------------------------------------------------------
  * SWが押されるまで待機し、指定時間長押しされた場合にONを返す
  *----------------------------------------------------------------------*/
-extern int SW_CLICK_HOLD(unsigned long msec);
+extern int swClickHold(unsigned long msec);
 
 /*----------------------------------------------------------------------
  * 指定の整数値をLEDに出力する
  *----------------------------------------------------------------------*/
-extern void SHOW_VALUE(long val);
+extern void showValue(long val);
 
 #ifdef	EXAMPLE
 /*===============================================================================
  * 汎用I/Oポートの動作確認
  * - スイッチ監視とLED点滅
  *===============================================================================*/
-extern void GPIO_EXAMPLE(void);
+extern void gpioExample(void);
 #endif // EXAMPLE
 
 #endif // _GPIO_H_

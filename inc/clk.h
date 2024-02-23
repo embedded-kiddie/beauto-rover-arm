@@ -52,11 +52,11 @@ typedef enum {
 /*----------------------------------------------------------------------
  *
  *----------------------------------------------------------------------*/
-extern void SwitchMainClockSrc(int src);
-extern void SwitchWDTClockSrc(int src);
-extern void SetWDTClock(WDT_FREQSEL_t freqsel, int divsel);
-extern unsigned long GetWDTClock(void);
-extern unsigned long GetSysPLLClock(void);
-extern unsigned long GetMainClock(void);
+extern void clkSwitchMainClockSrc(int src);
+extern void clkSwitchWDTClockSrc(int src);
+extern void clkSetWDTClock(WDT_FREQSEL_t freqsel, int divsel);
+extern unsigned long clkGetWDTClock(void);
+extern unsigned long clkGetSysPLLClock(void);
+extern unsigned long clkGetMainClock(void);
 
 #endif // _CLK_H_

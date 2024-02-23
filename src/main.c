@@ -16,16 +16,16 @@ int main(void) {
 	 * 汎用I/Oポートの動作確認
 	 * - スイッチ監視とLED点滅
 	 *-----------------------------------------*/
-	extern void GPIO_EXAMPLE(void);
-	GPIO_EXAMPLE();
+	extern void gpioExample(void);
+	gpioExample();
 
 #elif	0
 	/*-----------------------------------------
 	 * A/D変換の動作確認
 	 *　- バーストモードをサポート
 	 *-----------------------------------------*/
-	extern void ADC_EXAMPLE(void);
-	ADC_EXAMPLE();
+	extern void adcExample(void);
+	adcExample();
 
 #elif	0
 	/*-----------------------------------------
@@ -34,8 +34,8 @@ int main(void) {
 	 *	1: 直進性を確認し、駆動系のゲインを調整する
 	 *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
 	 *-----------------------------------------*/
-	extern void PWM_EXAMPLE(int exampleType);
-	PWM_EXAMPLE(1);
+	extern void pmuExample(int exampleType);
+	pmuExample(1);
 
 #elif	0
 	/*-----------------------------------------
@@ -44,8 +44,8 @@ int main(void) {
 	 *	1: エコーバック
 	 *	2: printf(), scanf()
 	 *-----------------------------------------*/
-	extern void SCI_EXAMPLE(int exampleType);
-	SCI_EXAMPLE(2);
+	extern void sciExample(int exampleType);
+	sciExample(2);
 
 #elif	0
 	/*-----------------------------------------
@@ -54,8 +54,8 @@ int main(void) {
 	 *	1: メイン処理中でウォッチドッグを叩く
 	 *	2: SysTick割り込み中でウォッチドッグを叩く
 	 *-----------------------------------------*/
-	extern void WDT_EXAMPLE(int exampleType);
-	WDT_EXAMPLE(1);
+	extern void wdtExample(int exampleType);
+	wdtExample(1);
 
 #elif	0
 	/*-----------------------------------------
@@ -64,16 +64,16 @@ int main(void) {
 	 *	1: Active mode　でのスリープ
 	 *	2: Sleep/Deep-sleep/Deep Power-down
 	 *-----------------------------------------*/
-	extern void PMU_EXAMPLE(int exampleType);
-	PMU_EXAMPLE(2);
+	extern void pmuExample(int exampleType);
+	pmuExample(2);
 
 #elif	0
 	/*-----------------------------------------
 	 * バックグランド演奏の動作確認
 	 * - フォアグラウンドでLチカ
 	 *-----------------------------------------*/
-	extern void PLAY_EXAMPLE(void);
-	PLAY_EXAMPLE();
+	extern void playExample(void);
+	playExample();
 
 #else
 	/*-----------------------------------------
@@ -84,8 +84,8 @@ int main(void) {
 	 *	2: ON-OFF制御＋P制御によるライントレース
 	 *	3: PD制御によるライントレース
 	 *-----------------------------------------*/
-	extern void TRACE_RUN(int runMode);
-	TRACE_RUN(4);
+	extern void traceRun(int runMode);
+	traceRun(4);
 
 #endif
 

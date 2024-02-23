@@ -12,8 +12,8 @@
 /*----------------------------------------------------------------------
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
-extern void PWM_INIT(void);
-extern void PWM_OUT(short L, short R);
+extern void pwmInit(void);
+extern void pwmOut(short L, short R);
 
 /*----------------------------------------------------------------------
  * PWM出力の最大値
@@ -29,7 +29,7 @@ extern void PWM_OUT(short L, short R);
  *	1: 直進性を確認し、駆動系のゲインを調整する
  *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *===============================================================================*/
-extern void PWM_EXAMPLE(int exampleType);
+extern void pwmExample(int exampleType);
 #endif // EXAMPLE
 
 #endif // _PWM_H_

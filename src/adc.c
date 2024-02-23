@@ -35,7 +35,7 @@
 /*----------------------------------------------------------------------
  * A/D変換 - 初期化
  *----------------------------------------------------------------------*/
-void ADC_INIT(void) {
+void adcInit(void) {
 	// 7.4.28 IOCON_R_PIO0_11
 	// I/O configuration for pin R/PIO0_11/AD0/CT32B0_MAT3 (Reset value: 0xD0 = 1101 0000)
 	// Bit 0:2 (FUNC)  : 001(Selects function PIO0_11)
@@ -94,7 +94,7 @@ void ADC_INIT(void) {
 /*----------------------------------------------------------------------
  * A/D変換 - センサ値の読み込み
  *----------------------------------------------------------------------*/
-unsigned short ADC_READ(unsigned char ch) {
+unsigned short adcRead(unsigned char ch) {
 	unsigned int DR; // Data Register
 
 	// A/D変換のチャネルは 0 あるいは 1 のみ
@@ -148,11 +148,11 @@ unsigned short ADC_READ(unsigned char ch) {
 /*----------------------------------------------------------------------
  * A/D変換 - 2チャンネル同時読み込み
  *----------------------------------------------------------------------*/
-inline void ADC_READ2(unsigned short *L, unsigned short *R) {
+inline void adcRead2(unsigned short *L, unsigned short *R) {
 #if	(ADC_MODE == ADC_MODE_SINGLE)
 
-	*L = ADC_READ(ADC_LEFT );
-	*R = ADC_READ(ADC_RIGHT);
+	*L = adcRead(ADC_LEFT );
+	*R = adcRead(ADC_RIGHT);
 
 #else // ADC_MODE == AD_MODE_BURST
 
@@ -185,29 +185,29 @@ inline void ADC_READ2(unsigned short *L, unsigned short *R) {
 #include "gpio.h"
 #include "adc.h"
 
-void ADC_EXAMPLE(void) {
-	GPIO_INIT();	// LED()
-	ADC_INIT();
+void adcExample(void) {
+	gpioInit();	// ledOn()
+	adcInit();
 
 	while (1) {
 		short X, C = 100;
 		unsigned short L, R;
 
-		L = ADC_READ(ADC_LEFT );
-		R = ADC_READ(ADC_RIGHT);
+		L = adcRead(ADC_LEFT );
+		R = adcRead(ADC_RIGHT);
 		X = L - R;
 
 		// 中央付近
 		if (-C < X && X < C) {
-			LED(LED_ON);
+			ledOn(LED_ON);
 		}
 		// 左寄り
 		else if (X <= -C) {
-			LED(LED1);
+			ledOn(LED1);
 		}
 		// 右寄り
 		else if (C <= X) {
-			LED(LED2);
+			ledOn(LED2);
 		}
 	}
 }

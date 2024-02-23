@@ -19,8 +19,8 @@
 /*----------------------------------------------------------------------
  * 9.4.2　GPIO data direction register (GPIO0DIR)
  *----------------------------------------------------------------------*/
-#ifndef	SetGpioDir
-void SetGpioDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir)
+#ifndef	gpioSetDir
+void gpioSetDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir)
 {
 	if (dir) {
 		port->DIR |= (1 << bit);	// 出力ポートに設定
@@ -29,24 +29,24 @@ void SetGpioDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir)
 		port->DIR &= ~(1 << bit);	// 入力ポートに設定
 	}
 }
-#endif // SetGpioDir
+#endif // gpioSetDir
 
 /*----------------------------------------------------------------------
  * 9.5.1　Write/read data operations (Masked write/read operation)
  *----------------------------------------------------------------------*/
-#ifndef	SetGpioBit
-void SetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t val)
+#ifndef	gpioSetBit
+void gpioSetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t val)
 {
 	port->MASKED_ACCESS[(1 << bit)] = (val << bit);
 }
-#endif // SetGpioBit
+#endif // gpioSetBit
 
-#ifndef	GetGpioBit
-unsigned char GetGpioBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit)
+#ifndef	gpioGetBit
+unsigned char gpioGetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit)
 {
 	return port->MASKED_ACCESS[(1 << bit)];
 }
-#endif // GetGpioBit
+#endif // gpioGetBit
 
 /*----------------------------------------------------------------------
  * 割込み処理用テーブル
@@ -75,7 +75,7 @@ static GPIO_IRQ_t irqTable[4] = {
  *   __IO uint32_t IC;   9.4.9 GPIO interrupt clear register
  * } LPC_GPIO_TypeDef;
  *----------------------------------------------------------------------*/
-void SetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void)) {
+void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void)) {
 	__IO LPC_GPIO_TypeDef* port = irqTable[portNo].port;
 
 	// 監視するビットと実行する関数を登録
@@ -110,7 +110,7 @@ void SetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, v
 /*----------------------------------------------------------------------
  * 外部割込みの処理
  *----------------------------------------------------------------------*/
-static void IrqHandler(int portNo) {
+static void irqHandler(int portNo) {
 	__IO LPC_GPIO_TypeDef *port = irqTable[portNo].port;
 
 	// 9.4.7 GPIO raw interrupt status register (GPIO0RIS)
@@ -140,55 +140,60 @@ static void IrqHandler(int portNo) {
 /*----------------------------------------------------------------------
  * 外部割込みハンドラ
  *----------------------------------------------------------------------*/
-void PIOINT0_IRQHandler(void) { IrqHandler(0); }
-void PIOINT1_IRQHandler(void) { IrqHandler(1); }
-void PIOINT2_IRQHandler(void) { IrqHandler(2); }
-void PIOINT3_IRQHandler(void) { IrqHandler(3); }
+void PIOINT0_IRQHandler(void) { irqHandler(0); }
+void PIOINT1_IRQHandler(void) { irqHandler(1); }
+void PIOINT2_IRQHandler(void) { irqHandler(2); }
+void PIOINT3_IRQHandler(void) { irqHandler(3); }
 
 /*----------------------------------------------------------------------
  * GPIOの初期化
  *----------------------------------------------------------------------*/
-void GPIO_INIT(void) {
-	SetGpioDir(LPC_GPIO0, GPIO_BIT_LED1, 1);	// PIO0 ビット3（LED1：橙）を出力に設定
-	SetGpioDir(LPC_GPIO0, GPIO_BIT_LED2, 1);	// PIO0 ビット7（LED2：緑）を出力に設定
-	SetGpioDir(LPC_GPIO0, GPIO_BIT_SW1,  0);	// PIO0 ビット1（SW1）を入力に設定
+void gpioInit(void) {
+	gpioSetDir(LPC_GPIO0, GPIO_BIT_LED1, 1);	// PIO0 ビット3（LED1：橙）を出力に設定
+	gpioSetDir(LPC_GPIO0, GPIO_BIT_LED2, 1);	// PIO0 ビット7（LED2：緑）を出力に設定
+	gpioSetDir(LPC_GPIO0, GPIO_BIT_SW1,  0);	// PIO0 ビット1（SW1）を入力に設定
 //	LPC_IOCON->PIO0_1 = ((0<<0) | (1<<3));		// PIO0 ビット1（SW1）をプルアップに設定 --> ハードウェアで対応済み
 }
 
 /*----------------------------------------------------------------------
  * LEDの点灯／消灯
  *----------------------------------------------------------------------*/
-void LED(unsigned char led) {
-	SetGpioBit(LPC_GPIO0, GPIO_BIT_LED1, !(led & LED1));	// Low active
-	SetGpioBit(LPC_GPIO0, GPIO_BIT_LED2, !(led & LED2));	// Low active
+void ledOn(unsigned char led) {
+	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED1, !(led & LED1));	// Low active
+	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED2, !(led & LED2));	// Low active
+}
+
+void ledOff(unsigned char led) {
+	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED1, (led & LED1));	// Low active
+	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED2, (led & LED2));	// Low active
 }
 
 /*----------------------------------------------------------------------
  * LEDの点灯を反転する
  *----------------------------------------------------------------------*/
-void LED_TOGGLE(unsigned char led) {
+void ledToggle(unsigned char led) {
 	if (led & LED1) {
-		SetGpioBit(LPC_GPIO0, GPIO_BIT_LED1, !GetGpioBit(LPC_GPIO0, GPIO_BIT_LED1));
+		gpioSetBit(LPC_GPIO0, GPIO_BIT_LED1, !gpioGetBit(LPC_GPIO0, GPIO_BIT_LED1));
 	}
 	if (led & LED2) {
-		SetGpioBit(LPC_GPIO0, GPIO_BIT_LED2, !GetGpioBit(LPC_GPIO0, GPIO_BIT_LED2));
+		gpioSetBit(LPC_GPIO0, GPIO_BIT_LED2, !gpioGetBit(LPC_GPIO0, GPIO_BIT_LED2));
 	}
 }
 
 /*----------------------------------------------------------------------
  * 指定時間間隔でLEDをフラッシュさせる
  *----------------------------------------------------------------------*/
-void LED_FLUSH(unsigned long msec) {
-	LED(LED1); WAIT(msec);
-	LED(LED2); WAIT(msec);
+void ledFlush(unsigned long msec) {
+	ledOn(LED1); timerWait(msec);
+	ledOn(LED2); timerWait(msec);
 }
 
 /*----------------------------------------------------------------------
  * 指定時間間隔でLEDを点滅させる
  *----------------------------------------------------------------------*/
-void LED_BLINK(unsigned long msec) {
-	LED(LED_ON ); WAIT(msec);
-	LED(LED_OFF); WAIT(msec);
+void ledBlink(unsigned long msec) {
+	ledOn (LED1_LED2); timerWait(msec);
+	ledOff(LED1_LED2); timerWait(msec);
 }
 
 /*----------------------------------------------------------------------
@@ -196,15 +201,15 @@ void LED_BLINK(unsigned long msec) {
  *----------------------------------------------------------------------*/
 #define WAIT_CHATTERING	50 // チャタリング除去の待機時間[msec]
 
-int SW_SCAN(void) {
+int swScan(void) {
 	while (1) {
 		// PIO0_1： SW1
-		unsigned char c = GetGpioBit(LPC_GPIO0, GPIO_BIT_SW1);
+		unsigned char c = gpioGetBit(LPC_GPIO0, GPIO_BIT_SW1);
 
 		// チャタリング除去
-		WAIT(WAIT_CHATTERING);
+		timerWait(WAIT_CHATTERING);
 
-		if (c == GetGpioBit(LPC_GPIO0, GPIO_BIT_SW1)) {
+		if (c == gpioGetBit(LPC_GPIO0, GPIO_BIT_SW1)) {
 			// 'L'：押されている
 			// 'H'：離されている
 			return c ? SW_OFF : SW_ON;
@@ -215,11 +220,11 @@ int SW_SCAN(void) {
 /*----------------------------------------------------------------------
  * スイッチ状態（low active）をスキャンしON→OFFの立下りを検知する
  *----------------------------------------------------------------------*/
-int SW_CLICK(void) {
+int swClick(void) {
 	// スイッチが押されているかスキャンする
-	if (SW_SCAN() == SW_ON) {
+	if (swScan() == SW_ON) {
 		// 押されている間はループ
-		while (SW_SCAN() == SW_ON);
+		while (swScan() == SW_ON);
 
 		return SW_ON;	// ONからOFFに変化した
 	}
@@ -231,9 +236,9 @@ int SW_CLICK(void) {
 /*----------------------------------------------------------------------
  * スイッチが押されてから離されるまで待機する
  *----------------------------------------------------------------------*/
-int SW_STANDBY(void) {
+int swStandby(void) {
 	// OFFの間は待機
-	while (SW_CLICK() == SW_OFF) {
+	while (swClick() == SW_OFF) {
 		__NOP();
 	}
 
@@ -243,32 +248,32 @@ int SW_STANDBY(void) {
 /*----------------------------------------------------------------------
  * スイッチの立ち上がりエッジ（押されてから離された時）で実行する関数を登録する
  *----------------------------------------------------------------------*/
-void SW_WATCH(void (*f)(void)) {
-	SetInterrupt(0, GPIO_BIT_SW1, 0, 0, f);
+void swWatch(void (*f)(void)) {
+	gpioSetInterrupt(0, GPIO_BIT_SW1, 0, 0, f);
 }
 
 /*----------------------------------------------------------------------
  * スイッチが短くクリックされたらONを、長押しされた場合はHOLDを返す
  *----------------------------------------------------------------------*/
-int SW_CLICK_HOLD(unsigned long msec) {
+int swClickHold(unsigned long msec) {
 	unsigned long t;
 
 	// 離されていればすぐにOFFを返す
-	if (SW_SCAN() == SW_OFF) {
+	if (swScan() == SW_OFF) {
 		return SW_OFF;
 	}
 
-	t = TIMER_READ();
+	t = timerRead();
 
 	// 押されている間は待機
-	while (SW_SCAN() == SW_ON) {
-		if (TIMER_READ() > t + msec) {
-			LED(LED_OFF);
+	while (swScan() == SW_ON) {
+		if (timerRead() > t + msec) {
+			ledOff(LED1_LED2);
 		}
 	}
 
 	// 指定時間以上押されていたらHOLDを返す
-	return TIMER_READ() > t + msec ? SW_HOLD : SW_ON;
+	return timerRead() > t + msec ? SW_HOLD : SW_ON;
 }
 
 /*----------------------------------------------------------------------
@@ -276,45 +281,45 @@ int SW_CLICK_HOLD(unsigned long msec) {
  *----------------------------------------------------------------------*/
 #define	CLICK_HOLD_TIME	1000	// 長押し判定時間[sec]
 
-void SHOW_VALUE(long val) {
+void showValue(long val) {
 	int i, loop;
 	const MusicScore_t m[] = {{Do6, N16}, {Do5, N16}};
 
-	while (SW_CLICK() == SW_OFF) {
-		LED_FLUSH(100);
+	while (swClick() == SW_OFF) {
+		ledFlush(100);
 	}
-	LED(LED_OFF);
-	WAIT(500);
+	ledOff(LED1_LED2);
+	timerWait(500);
 
 	while (1) {
 		// スイッチを押すごとにLSBから2ビットずつLED1（上位）とLED2（下位）で値を表示する
 		for (i = 0; i < sizeof(val) * 8; i += 2) {
 			int v = (val >> i);
 			// LED1: 上位ビット、LED2: 下位ビット
-			LED((v & 0x02 ? LED1 : LED_OFF) | (v & 0x01 ? LED2: LED_OFF));
-			PLAY(m, 1, 180, 0);
-			SW_STANDBY();
-			WAIT(100);
+			ledOn((v & 0x02 ? LED1 : LED_OFF) | (v & 0x01 ? LED2: LED_OFF));
+			playScore(m, 1, 180, 0);
+			swStandby();
+			timerWait(100);
 		}
 
 		// SW_OFF : スイッチが押されていなければLEDの点滅を繰り返す
 		// SW_ON  : 短くクリックされたらループを抜け値の表示を繰り返す
 		// SW_HOLD: 指定秒の長押し後、離されたら呼び出し元に戻る
 		for (loop = 1; loop == 1;) {
-			switch (SW_CLICK_HOLD(CLICK_HOLD_TIME)) {
+			switch (swClickHold(CLICK_HOLD_TIME)) {
 			  case SW_OFF:
-				LED_FLUSH(100);
+				ledFlush(100);
 				break;
 			  case SW_ON:
-				LED(LED_OFF);
-				WAIT(500);
+				ledOff(LED1_LED2);
+				timerWait(500);
 				loop = 0;
 				break;
 			  case SW_HOLD:
 			  default:
-				LED(LED_OFF);
-				PLAY(m, 2, 180, 0);
-				WAIT(1000);
+				ledOff(LED1_LED2);
+				playScore(m, 2, 180, 0);
+				timerWait(1000);
 				return;
 			}
 		}
@@ -334,31 +339,31 @@ void SHOW_VALUE(long val) {
  * whileループを抜ける処理（割り込みハンドラから呼び出される想定）
  *----------------------------------------------------------------------*/
 volatile static char loopFlag = 1;
-void ExitLoop(void) {
+void exitLoop(void) {
 	loopFlag = 0;
-	WAIT_CANCEL();
+	timerWaitCancel();
 }
 
 /*----------------------------------------------------------------------
  * 汎用I/Oポートの動作例
  *----------------------------------------------------------------------*/
-void GPIO_EXAMPLE(void) {
-	TIMER_INIT();			// WAIT()
-	GPIO_INIT();			// SW_STANDBY()
-	PLAY_INIT();			// SHOW_VALUE() で短音を鳴らす
+void gpioExample(void) {
+	timerInit();			// timerWait()
+	gpioInit();				// swStandby()
+	playInit();				// showValue() で短音を鳴らす
 
-	LED(LED1|LED2);			// LED1とLED2を点灯させる
-	SW_STANDBY();			// スイッチが押されるまで待機
+	ledOn(LED1|LED2);		// LED1とLED2を点灯させる
+	swStandby();			// スイッチが押されるまで待機
 
-	while (!SW_CLICK()) {	// クリックされたら（ON→OFF）ループを抜ける
-		LED_BLINK(100);		// ON:100[msec] + OFF:100[msec]
+	while (!swClick()) {	// クリックされたら（ON→OFF）ループを抜ける
+		ledBlink(100);		// ON:100[msec] + OFF:100[msec]
 	}
 
-	SW_WATCH(ExitLoop);		// 割込み処理関数を登録し、スイッチ状態を監視する
+	swWatch(exitLoop);		// 割込み処理関数を登録し、スイッチ状態を監視する
 	while (loopFlag) {		// スイッチの割り込みが検知されたらループを抜ける
-		LED_FLUSH(500);		// LED1:500[msec] + LED2:500[msec]
+		ledFlush(500);		// LED1:500[msec] + LED2:500[msec]
 	}
 
-	SHOW_VALUE(0xffff);		// スイッチを押すごとにLSBから2ビットずつLED1（上位）とLED2（下位）で値を表示する
+	showValue(0xffff);		// スイッチを押すごとにLSBから2ビットずつLED1（上位）とLED2（下位）で値を表示する
 }
 #endif // EXAMPLE

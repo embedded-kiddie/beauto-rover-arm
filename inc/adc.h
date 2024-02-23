@@ -20,9 +20,9 @@
 /*----------------------------------------------------------------------
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
-extern void ADC_INIT(void);
-extern unsigned short ADC_READ(unsigned char ch);
-extern void ADC_READ2(unsigned short *L, unsigned short *R);
+extern void adcInit(void);
+extern unsigned short adcRead(unsigned char ch);
+extern void adcRead2(unsigned short *L, unsigned short *R);
 
 #ifdef	EXAMPLE
 /*===============================================================================
@@ -43,7 +43,7 @@ extern void ADC_READ2(unsigned short *L, unsigned short *R);
  *     |
  * ----+--->X
  *===============================================================================*/
-extern void ADC_EXAMPLE(void);
+extern void adcExample(void);
 #endif // EXAMPLE
 
 #endif // _ADC_H_

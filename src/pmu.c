@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "sci.h"
 #else
-#define	SCI_PRINTF(...)
+#define	sciPrintf(...)
 #endif
 
 #include "type.h"
@@ -44,7 +44,7 @@ static unsigned char pwmWakeupPin = 0;
 /*----------------------------------------------------------------------
  * Deep-sleep モード時のウォッチドッグOSCと電圧低下検知回路（BOD）の動作を設定する
  *----------------------------------------------------------------------*/
-void SetPowerDownSleep(unsigned long mask) {
+void pmuSetPowerDownSleep(unsigned long mask) {
 	// 3.5.45 Deep-sleep mode configuration register (PDSLEEPCFG)
 	LPC_SYSCON->PDSLEEPCFG = ((PDSLEEPCFG_FIXEDVAL) & ~(PDSLEEPCFG_MASK)) | ((~mask) & PDSLEEPCFG_MASK);
 }
@@ -52,7 +52,7 @@ void SetPowerDownSleep(unsigned long mask) {
 /*----------------------------------------------------------------------
  * Deep-sleep モード復帰時に駆動する周辺回路を設定する
  *----------------------------------------------------------------------*/
-void SetPowerDownAwake(unsigned long mask) {
+void pmuSetPowerDownAwake(unsigned long mask) {
 	// 3.5.46 Wake-up configuration register (PDAWAKECFG)
 	LPC_SYSCON->PDAWAKECFG = PDAWAKECFG_FIXEDVAL | ((~mask) & PDAWAKECFG_MASK);
 }
@@ -60,7 +60,7 @@ void SetPowerDownAwake(unsigned long mask) {
 /*----------------------------------------------------------------------
  * パワーダウン時に駆動しない周辺回路を設定する
  *----------------------------------------------------------------------*/
-void DelPowerDownRun(unsigned long mask) {
+void pmuDelPowerDownRun(unsigned long mask) {
 	unsigned long pdruncfg;
 
 	// 3.5.47 Power-down configuration register (PDRUNCFG)
@@ -73,7 +73,7 @@ void DelPowerDownRun(unsigned long mask) {
 /*----------------------------------------------------------------------
  * パワーダウン時に駆動する周辺回路を設定する
  *----------------------------------------------------------------------*/
-void AddPowerDownRun(unsigned long mask) {
+void pmuAddPowerDownRun(unsigned long mask) {
 	unsigned long pdruncfg;
 
 	// 3.5.47 Power-down configuration register (PDRUNCFG)
@@ -97,12 +97,12 @@ void WAKEUP_IRQHandler(void) {
 
 	// メインクロックの復帰
 	if (LPC_SYSCON->MAINCLKSEL != CLK_SRC_PLLOUT) {
-		SwitchMainClockSrc(CLK_SRC_PLLOUT);
+		clkSwitchMainClockSrc(CLK_SRC_PLLOUT);
 	}
 
 	// 次のタイマーの設定
 	if (pwmInterval) {
-		TIMER_WAKEUP(pwmInterval, WAKEUP_IRQHandler);
+		timerWakeup(pwmInterval, WAKEUP_IRQHandler);
 	}
 
 	// https://github.com/microbuilder/LPC1343CodeBase/blob/master/core/pmu/pmu.c#L101C2-L101C26
@@ -112,7 +112,7 @@ void WAKEUP_IRQHandler(void) {
 /*----------------------------------------------------------------------
  * スリープを復帰させるタイマーの周期を設定する（INTERRUPT_FROM = 0 の場合）
  *----------------------------------------------------------------------*/
-void PMU_WAKEUP(unsigned long msec) {
+void pmuWakeup(unsigned long msec) {
 	// 初期化
 	pwmInterval = msec;
 }
@@ -121,7 +121,7 @@ void PMU_WAKEUP(unsigned long msec) {
  * 3.9.2.2 Programming Sleep mode
  * The following codes are from application note AN10973
  *----------------------------------------------------------------------*/
-static void SleepMode() {
+static void sleepMode() {
 	// 1. The DPDEN bit in the PCON register must be set to zero
 	//    and clear the Deep Power down flag from the PMU
 	// 4.2.1 Power control register (PCON)
@@ -135,9 +135,9 @@ static void SleepMode() {
 	SCB->SCR &= ~(1<<2); // Clear SLEEPDEEP bit
 
 #if	0
-	SwitchMainClockSrc(CLK_SRC_IRCOSC); // IRC oscillator (12[HMz])
+	clkSwitchMainClockSrc(CLK_SRC_IRCOSC); // IRC oscillator (12[HMz])
 #else
-	SwitchMainClockSrc(CLK_SRC_WDTOSC); // WDT oscillator (9375[Hz])
+	clkSwitchMainClockSrc(CLK_SRC_WDTOSC); // WDT oscillator (9375[Hz])
 #endif
 }
 
@@ -145,7 +145,7 @@ static void SleepMode() {
  * 3.9.3.2 Programming Deep-sleep mode
  * The following codes are from application note AN10973
  *----------------------------------------------------------------------*/
-static void DeepSleepMode() {
+static void deepSleepMode() {
 
 #if	(INTERRUPT_FROM == INTERNAL_TIMER)
 
@@ -156,11 +156,11 @@ static void DeepSleepMode() {
 	LPC_IOCON->R_PIO1_1 = ((3<<0) | (1<<7));
 
 	// 1. Turn on the IRC, FLASH and WDTOSC
-	// Note: IRCOUT, IRC and FLASH are set by reset, WDTOSC is set in WDT_INIT()
-//	AddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC | PDRUNCFG_FLASH | PDRUNCFG_WDTOSC);
+	// Note: IRCOUT, IRC and FLASH are set by reset, WDTOSC is set in wdtInit()
+//	pmuAddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC | PDRUNCFG_FLASH | PDRUNCFG_WDTOSC);
 
 	// 2. メインクロックを WDT oscillator (9375[Hz]) に変更する
-	SwitchMainClockSrc(CLK_SRC_WDTOSC);
+	clkSwitchMainClockSrc(CLK_SRC_WDTOSC);
 
 	// 3. Ensure DPDEN is disabled in the power control register
 	// 4.2.1 Power control register (PCON)
@@ -169,7 +169,7 @@ static void DeepSleepMode() {
 	LPC_PMU->PCON = (1<<11); // Clear DPDFLAG if it was set
 
 	// 4. Select the power configuration in Deep-sleep mode in the PDSLEEPCFG register
-	SetPowerDownSleep(PDSLEEPCFG_WDTOSC); // BOD off, Watchdog oscillator on
+	pmuSetPowerDownSleep(PDSLEEPCFG_WDTOSC); // BOD off, Watchdog oscillator on
 
 	// 5. Specify peripherals to be powered up again when returning from deep sleep mode
 	// 3.5.46 Wake-up configuration register (PDAWAKECFG)
@@ -197,10 +197,10 @@ static void DeepSleepMode() {
 
 	// 1. Turn on the IRC, FLASH
 	// Note: IRC and FLASH are set by reset
-//	AddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC | PDRUNCFG_FLASH);
+//	pmuAddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC | PDRUNCFG_FLASH);
 
 	// 2. Switch MAINCLKSEL to IRC
-	SwitchMainClockSrc(CLK_SRC_IRCOSC);
+	clkSwitchMainClockSrc(CLK_SRC_IRCOSC);
 
 	// 3. Ensure DPDEN is disabled in the power control register
 	// 4.2.1 Power control register (PCON)
@@ -209,7 +209,7 @@ static void DeepSleepMode() {
 	LPC_PMU->PCON = (1<<11); // Clear DPDFLAG if it was set
 
 	// 4. Select the power configuration in Deep-sleep mode in the PDSLEEPCFG register
-	SetPowerDownSleep(0); // BOD off, Watchdog oscillator off
+	pmuSetPowerDownSleep(0); // BOD off, Watchdog oscillator off
 
 	// 5. Specify peripherals to be powered up again when returning from deep sleep mode
 	// 3.5.46 Wake-up configuration register (PDAWAKECFG)
@@ -240,7 +240,7 @@ static void DeepSleepMode() {
  * 3.9.4.2 Programming Deep power-down mode
  * The following codes are from application note AN10973
  *----------------------------------------------------------------------*/
-static void DeepPowerDown() {
+static void deepPowerDown() {
 	// この例題では、リセットがかかり続けてしまうので無効にする
 #if	FALSE
 	// 0. Configure PIO1_4 as WAKEUP pin
@@ -265,40 +265,40 @@ static void DeepPowerDown() {
 
 	// 4. Enable the IRC, FLASH and WDTOSC before entering power-down mode
 	// Note: IRCOUT and IRC are set by reset
-//	AddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC);
+//	pmuAddPowerDownRun(PDRUNCFG_IRCOUT | PDRUNCFG_IRC);
 #endif
 }
 
 /*----------------------------------------------------------------------
  * 各機能へのクロック供給を停止し、消費電力を抑える
  *----------------------------------------------------------------------*/
-unsigned int PMU_SLEEP(int mode) {
+unsigned int pmuSleep(int mode) {
 	switch (mode) {
 	  case PMU_ACTIVE_MODE:
 		if (pwmInterval) {
-			TIMER_WAKEUP(pwmInterval, WAKEUP_IRQHandler);
+			timerWakeup(pwmInterval, WAKEUP_IRQHandler);
 		}
 		break;
 
 	  case PMU_SLEEP_MODE:
 		if (pwmInterval) {
-			TIMER_WAKEUP(pwmInterval, WAKEUP_IRQHandler);
+			timerWakeup(pwmInterval, WAKEUP_IRQHandler);
 		}
-		SleepMode();
+		sleepMode();
 		break;
 
 	  case PMU_DEEP_SLEEP:
 #if	(INTERRUPT_FROM == INTERNAL_TIMER)
 		if (pwmInterval) {
-			TIMER_WAKEUP(pwmInterval, WAKEUP_IRQHandler);
+			timerWakeup(pwmInterval, WAKEUP_IRQHandler);
 		}
 #endif
-		DeepSleepMode();
+		deepSleepMode();
 		break;
 
 	  case PMU_POWER_DOWN:
 	  default:
-		DeepPowerDown(); // なぜかリセットがかかってしまう
+		deepPowerDown(); // なぜかリセットがかかってしまう
 		break;
 	}
 
@@ -314,7 +314,7 @@ unsigned int PMU_SLEEP(int mode) {
  * - Active/Sleep/Deep-sleep/Deep Power-down 各モードの動作例
  *
  * 【EXAMPLE1】
- *	TIMER_WAKEUP() によるタイマー割り込みにより一定周期でタスクを起動する
+ *	timerWakeup() によるタイマー割り込みにより一定周期でタスクを起動する
  *
  * 【EXAMPLE2】
  *	内部割込み（タイマー割込み）、または外部割込み（スイッチによる割込み）でタスクを起動する
@@ -323,7 +323,7 @@ unsigned int PMU_SLEEP(int mode) {
  *
  *	・INTERRUPT_FROM = EXTERNAL_SWITCH （1, 外部割込み）の場合
  *	  スイッチによる割り込みでタスクを起動する
- *	  ・Active/Sleep mode では、SW_WATCH() により1回だけ起動する
+ *	  ・Active/Sleep mode では、swWatch() により1回だけ起動する
  *	  ・Deep-sleep mode では、直接 start logic で外部トリガ（スイッチ）を監視しているため、
  *	    スイッチを押すたびにタスクが起動される
  *===============================================================================*/
@@ -337,47 +337,47 @@ unsigned int PMU_SLEEP(int mode) {
 /*----------------------------------------------------------------------
  * タイマーの割込みハンドラ  TIMER32_1_IRQHandler() から呼び出される関数
  *----------------------------------------------------------------------*/
-static void Wakeup(void) {
-	SCI_PRINTF("Wakeup\r\n");
+static void wakeupHandler(void) {
+	sciPrintf("wakeupHandler\r\n");
 
-	TIMER_WAKEUP(1000, Wakeup);		// 1秒周期でタイマー割り込み発生させる
+	timerWakeup(1000, wakeupHandler); // 1秒周期でタイマー割り込み発生させる
 }
 
 /*----------------------------------------------------------------------
  * 動作例1: Active mode　でのスリープ
  *----------------------------------------------------------------------*/
-static void PmuExample1() {
-	TIMER_WAKEUP(1, Wakeup);		// 1[msec]後にタイマー割り込み発生させる
+static void pmuExample1() {
+	timerWakeup(1, wakeupHandler);	// 1[msec]後にタイマー割り込み発生させる
 
 	while (1) {
 		__WFI();					// Wait For Interrupt
-		LED_BLINK(100);				// タスク（100[msec] on + 100[msec] off）
+		ledBlink(100);				// タスク（100[msec] on + 100[msec] off）
 	}
 }
 
 /*----------------------------------------------------------------------
  * 動作例2: Active/Sleep/Deep-sleep/Deep Power-down の各モード動作例
  *----------------------------------------------------------------------*/
-static void PmuExample2() {
+static void pmuExample2() {
 #if	(INTERRUPT_FROM == INTERNAL_TIMER)
-	PMU_WAKEUP(1000);				// 内部割込み：1秒周期のタイマー割り込みでSLEEPから復帰
+	pmuWakeup(1000);				// 内部割込み：1秒周期のタイマー割り込みでSLEEPから復帰
 #else
-	SW_WATCH(NULL);					// 外部割込み：スイッチの割り込みでSLEEPから復帰
+	swWatch(NULL);					// 外部割込み：スイッチの割り込みでSLEEPから復帰
 #endif
 
 	while (1) {
 		// 各モードでSLEEPする
 #if		0
-		PMU_SLEEP(PMU_ACTIVE_MODE);	// 割込み発生から500[nsec]でSLEEPから復帰
+		pmuSleep(PMU_ACTIVE_MODE);	// 割込み発生から500[nsec]でSLEEPから復帰
 #elif	0
-		PMU_SLEEP(PMU_SLEEP_MODE);	// 割込み発生から2.9[μsec]でSLEEPから復帰
+		pmuSleep(PMU_SLEEP_MODE);	// 割込み発生から2.9[μsec]でSLEEPから復帰
 #elif	1
-		PMU_SLEEP(PMU_DEEP_SLEEP);	// 割込み発生から5[msec]でSLEEPから復帰
+		pmuSleep(PMU_DEEP_SLEEP);	// 割込み発生から5[msec]でSLEEPから復帰
 #elif	0
-		PMU_SLEEP(PMU_POWER_DOWN);	// なぜかリセットがかかってしまう
+		pmuSleep(PMU_POWER_DOWN);	// なぜかリセットがかかってしまう
 #endif
 
-		LED_BLINK(100);				// タスク（100[msec] on + 100[msec] off）
+		ledBlink(100);				// タスク（100[msec] on + 100[msec] off）
 	}
 }
 
@@ -387,31 +387,31 @@ static void PmuExample2() {
  *	1: Active mode　でのスリープ
  *	2: Sleep/Deep-sleep/Deep Power-down
  *----------------------------------------------------------------------*/
-void PMU_EXAMPLE(int exampleType) {
+void pmuExample(int exampleType) {
 	const MusicScore_t m[] = {{Fa6, N16}, {Fa5, N16}};
 
-	TIMER_INIT();	// TIMER_WAKEUP()
-	GPIO_INIT();	// LED_BLINK()
-	WDT_INIT();		// WDT oscillator (Deep-sleep mode)
+	timerInit();	// timerWakeup()
+	gpioInit();		// ledBlink()
+	wdtInit();		// WDT oscillator (Deep-sleep mode)
 
 	// 再起動を知らせる短音
-	PLAY_INIT();
-	PLAY(m, 2, 180, 0);
-	while (IS_PLAYING());
+	playInit();
+	playScore(m, 2, 180, 0);
+	while (playIsPlaying());
 
 #if	PMU_DEBUG
-	SCI_INIT();		// PIO0_3がUSB_VBUSと競合するため、LED1（橙）点灯せず
-	SW_STANDBY();	// 通信の確立を確認し、SW1で動作を開始する
+	sciInit();		// PIO0_3がUSB_VBUSと競合するため、LED1（橙）点灯せず
+	swStandby();	// 通信の確立を確認し、SW1で動作を開始する
 #endif
 
 	switch (exampleType) {
 	  case 1:
-		PmuExample1();
+		pmuExample1();
 		break;
 
 	  case 2:
 	  default:
-		PmuExample2();
+		pmuExample2();
 		break;
 	}
 }

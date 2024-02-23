@@ -38,14 +38,14 @@
 /*----------------------------------------------------------------------
  * シリアル通信I/F - 初期化
  *----------------------------------------------------------------------*/
-void SCI_INIT(void)
+void sciInit(void)
 {
 	// 7.4.18 IOCON_PIO0_6 (PIO0_6/USB_CONNECT/SCK)
 	// Bit 2:0 FUNC
 	// 0x0 = Selects function PIO0_6
 	// 0x1 = Selects function USB_CONNECT
 	// 0x2 = Selects function SCK0
-	SetGpioBit(LPC_GPIO0, 6, 1);
+	gpioSetBit(LPC_GPIO0, 6, 1);
 
 	SciInit(); // defined in cdcuser.c
 }
@@ -53,7 +53,7 @@ void SCI_INIT(void)
 /*--------------------------------------------------------------------------
  * シリアル通信出力 - 書式指定付き出力
  *--------------------------------------------------------------------------*/
-int SCI_PRINTF(const char *fmt, ...)
+int sciPrintf(const char *fmt, ...)
 {
 	int len = 0;
 	/*static*/ char buf[SCI_BUF_SIZE];
@@ -67,7 +67,7 @@ int SCI_PRINTF(const char *fmt, ...)
 	SciStrTx((unsigned char*)buf, (unsigned char)len);
 
 	// 次の送信まで間を空ける
-	WAIT(SCI_WAIT);
+	timerWait(SCI_WAIT);
 
 	return len;
 }
@@ -75,7 +75,7 @@ int SCI_PRINTF(const char *fmt, ...)
 /*--------------------------------------------------------------------------
  * シリアル通信入力 - 1行分の文字列を読み取り、バッファに格納する
  *--------------------------------------------------------------------------*/
-int SCI_GETS(char *buf, int len) {
+int sciGets(char *buf, int len) {
 	int n = 0;
 	unsigned char c;
 
@@ -112,12 +112,12 @@ int SCI_GETS(char *buf, int len) {
 /*--------------------------------------------------------------------------
  * シリアル通信入力 - 書式指定付き入力（簡易版）
  *--------------------------------------------------------------------------*/
-int SCI_SCANF(const char* fmt, ...) {
+int sciScanf(const char* fmt, ...) {
 	int len = 1;
 	char buf[SCI_BUF_SIZE];
 	const char *p = fmt;
 
-	SCI_GETS(buf, SCI_BUF_SIZE);
+	sciGets(buf, SCI_BUF_SIZE);
 
 	va_list arg_ptr;
 	va_start(arg_ptr, fmt);
@@ -188,14 +188,14 @@ int __sys_write(int iFileHandle, char *pcBuffer, int iLength) {
 	SciStrTx((unsigned char*)pcBuffer, (unsigned char)iLength);
 
 	// 次の送信まで間を空ける
-	WAIT(SCI_WAIT);
+	timerWait(SCI_WAIT);
 
 	return 0;
 }
 
 int __sys_read(int iFileHandle, char *pcBuffer, int iLen) {
 	// 1行分の文字列を読み取り、バッファに格納する
-	SCI_GETS(pcBuffer, iLen);
+	sciGets(pcBuffer, iLen);
 	return 1;
 }
 
@@ -224,7 +224,7 @@ int __sys_readc(void) {
 /*----------------------------------------------------------------------
  * 動作例1: エコーバック
  *----------------------------------------------------------------------*/
-void SciExample1(void) {
+void sciExample1(void) {
 	while (1) {
 		unsigned char data = 0;
 		if (SciByteRx(&data)) {
@@ -236,27 +236,27 @@ void SciExample1(void) {
 /*----------------------------------------------------------------------
  * 動作例2: printf(), scanf()
  *----------------------------------------------------------------------*/
-void SciExample2(void) {
+void sciExample2(void) {
 	int i = 0;
 	const char *txt = "0123456789012345678901234567890123456789012345678901234567890123456789\r\n";
 
 	CDC_SetLineCoding();
-	SCI_PRINTF("%s%s", "\e[2J", "\e[0;0H"); // 画面クリア＋原点に移動
-	SCI_PRINTF("Baud rate   = %d\r\n", CDC_LineCoding.dwDTERate);
-	SCI_PRINTF("Stop bit(s) = %d\r\n", CDC_LineCoding.bCharFormat);
-	SCI_PRINTF("Parity type = %d\r\n", CDC_LineCoding.bParityType);
-	SCI_PRINTF("Data bits   = %d\r\n", CDC_LineCoding.bDataBits);
+	sciPrintf("%s%s", "\e[2J", "\e[0;0H"); // 画面クリア＋原点に移動
+	sciPrintf("Baud rate   = %d\r\n", CDC_LineCoding.dwDTERate);
+	sciPrintf("Stop bit(s) = %d\r\n", CDC_LineCoding.bCharFormat);
+	sciPrintf("Parity type = %d\r\n", CDC_LineCoding.bParityType);
+	sciPrintf("Data bits   = %d\r\n", CDC_LineCoding.bDataBits);
 
 	printf("Circle ratio = %7.4lf\r\n", (double)3.1415926);
 	printf("Cyborg %03d is a Japanese famous animation.\r\n", 9);
 	printf(txt); // ヌル文字に関係なく64文字でカット
 
 	printf("%sPlease input a number: ", "\r\n");
-	SCI_SCANF("%8d", &i); // scanf()は動作せず
+	sciScanf("%8d", &i); // scanf()は動作せず
 	printf("%sYour input is '%d'.", "\r\n", i);
 
 	while (1) {
-		printf("\e[%d;%dH Timer = %10ld", 10, 30, TIMER_READ());
+		printf("\e[%d;%dH Timer = %10ld", 10, 30, timerRead());
 	}
 }
 
@@ -266,22 +266,22 @@ void SciExample2(void) {
  *	1: エコーバック
  *	2: printf(), scanf()
  *--------------------------------------------------------------------------*/
-void SCI_EXAMPLE(int exampleType) {
-	TIMER_INIT();	// WAIT()
-	GPIO_INIT();	// SW_STANDBY()
-	SCI_INIT();		// PIO0_3がUSB_VBUSと競合するため、LED1（橙）点灯せず
+void sciExample(int exampleType) {
+	timerInit();	// timerWait()
+	gpioInit();		// swStandby()
+	sciInit();		// PIO0_3がUSB_VBUSと競合するため、LED1（橙）点灯せず
 
-	SW_STANDBY();	// 通信の確立を確認し、SW1で動作を開始する
-	LED(LED_ON);	// LED2（緑）のみ点灯
+	swStandby();	// 通信の確立を確認し、SW1で動作を開始する
+	ledOn(LED_ON);	// LED2（緑）のみ点灯
 
 	switch (exampleType) {
 	  case 1:
-		SciExample1();
+		sciExample1();
 		break;
 
 	  case 2:
 	  default:
-		SciExample2();
+		sciExample2();
 		break;
 	}
 }

@@ -35,7 +35,7 @@
 /*----------------------------------------------------------------------
  * PWM出力の初期化 - I/Oピン、タイマの設定
  *----------------------------------------------------------------------*/
-void PWM_INIT(void) {
+void pwmInit(void) {
 	/*-----------------------------------------
 	 * I/O Configuration
 	 *-----------------------------------------*/
@@ -53,13 +53,13 @@ void PWM_INIT(void) {
 
 	// 9.4.2 GPIO data direction register (MTR1)
 	// Bit 11:0 (IO): Selects pin x as input or output (x = 0 to 11)
-	SetGpioDir(LPC_GPIO2, 0, 1);	// Set PIO2_0 as output port pin
-	SetGpioDir(LPC_GPIO2, 1, 1);	// Set PIO2_1 as output port pin
+	gpioSetDir(LPC_GPIO2, 0, 1);	// Set PIO2_0 as output port pin
+	gpioSetDir(LPC_GPIO2, 1, 1);	// Set PIO2_1 as output port pin
 
 	// 9.4.2 GPIO data direction register (MTR2)
 	// Bit 11:0 (IO): Selects pin x as input or output (x = 0 to 11)
-	SetGpioDir(LPC_GPIO2, 2, 1);	// Set PIO2_2 as output port pin
-	SetGpioDir(LPC_GPIO2, 3, 1);	// Set PIO2_3 as output port pin
+	gpioSetDir(LPC_GPIO2, 2, 1);	// Set PIO2_2 as output port pin
+	gpioSetDir(LPC_GPIO2, 3, 1);	// Set PIO2_3 as output port pin
 
 	// 9.4.1 GPIO data register
 	// Bit 11:0 (DATA): Logic levels for pins PIOn_0 to PIOn_11. HIGH=1, LOW=0
@@ -129,7 +129,7 @@ void PWM_INIT(void) {
  *	後退		0 ～ -32767
  *	※ 両輪とも、前進が正（+）、後退が負（-）をPWM指示値とする
  *----------------------------------------------------------------------*/
-void PWM_OUT(short L, short R) {
+void pwmOut(short L, short R) {
 	// モーター回転方向の指示値
 	// PIO2_0 ～PIO2_3 を 'L' に初期化
 	int dir = LPC_GPIO2->DATA & 0x0ff0;
@@ -195,54 +195,54 @@ void PWM_OUT(short L, short R) {
 /*----------------------------------------------------------------------
  * 動作例1: 直進性を確認し、駆動系のゲインを調整する
  *----------------------------------------------------------------------*/
-void PwmExample1(void) {
+void pwmExample1(void) {
 	unsigned short pwm, delta = PWM_MAX / 200;
 
 	while (1) {
 		// 前進
 		for (pwm = 0; pwm <= PWM_MAX; pwm += delta) {
-			PWM_OUT(pwm, pwm);
-			WAIT(10);
+			pwmOut(pwm, pwm);
+			timerWait(10);
 		}
 
 		// 停止
-		PWM_OUT(0, 0);
-		WAIT(1000);
+		pwmOut(0, 0);
+		timerWait(1000);
 
 		// 後退
 		for (pwm = 0; pwm <= PWM_MAX; pwm += delta) {
-			PWM_OUT(-pwm, -pwm);
-			WAIT(10);
+			pwmOut(-pwm, -pwm);
+			timerWait(10);
 		}
 
 		// 停止
-		PWM_OUT(0, 0);
-		WAIT(1000);
+		pwmOut(0, 0);
+		timerWait(1000);
 
 		// スイッチが押されるまで待機
-		while (!SW_CLICK()) { LED_FLUSH(100); }
-		LED(LED_ON);
+		while (!swClick()) { ledFlush(100); }
+		ledOn(LED_ON);
 	}
 }
 
 /*----------------------------------------------------------------------
  * 動作例2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *----------------------------------------------------------------------*/
-void PwmExample2(void) {
+void pwmExample2(void) {
 	short pwm = PWM_MAX / 2; // デューティ50%で動作
 
 	while (1) {
-		PWM_OUT(+pwm, +pwm); WAIT(1000); // 前進
-		PWM_OUT(   0,    0); WAIT(1000); // 停止
+		pwmOut(+pwm, +pwm); timerWait(1000); // 前進
+		pwmOut(   0,    0); timerWait(1000); // 停止
 
-		PWM_OUT(+pwm, -pwm); WAIT(1000); // 右回転
-		PWM_OUT(   0,    0); WAIT(1000); // 停止
+		pwmOut(+pwm, -pwm); timerWait(1000); // 右回転
+		pwmOut(   0,    0); timerWait(1000); // 停止
 
-		PWM_OUT(-pwm, +pwm); WAIT(1000); // 左回転
-		PWM_OUT(   0,    0); WAIT(1000); // 停止
+		pwmOut(-pwm, +pwm); timerWait(1000); // 左回転
+		pwmOut(   0,    0); timerWait(1000); // 停止
 
-		PWM_OUT(-pwm, -pwm); WAIT(1000); // 後退
-		PWM_OUT(   0,    0); WAIT(1000); // 停止
+		pwmOut(-pwm, -pwm); timerWait(1000); // 後退
+		pwmOut(   0,    0); timerWait(1000); // 停止
 	}
 }
 
@@ -252,24 +252,24 @@ void PwmExample2(void) {
  *	1: 直進性を確認し、駆動系のゲインを調整する
  *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *----------------------------------------------------------------------*/
-void PWM_EXAMPLE(int exampleType) {
-	TIMER_INIT();	// WAIT()
-	GPIO_INIT();	// SW_CLICK(), LED()
-	PWM_INIT();		// PWM出力の初期化
+void pwmExample(int exampleType) {
+	timerInit();	// timerWait()
+	gpioInit();		// swClick(), ledOn()
+	pwmInit();		// PWM出力の初期化
 
 	// スイッチが押されるまで待機
-	while (!SW_CLICK()) { LED_FLUSH(100); }
-	WAIT(500);		// 少し待ってから
-	LED(LED_ON);	// LEDを点灯させてスタート
+	while (!swClick()) { ledFlush(100); }
+	timerWait(500);	// 少し待ってから
+	ledOn(LED_ON);	// LEDを点灯させてスタート
 
 	switch (exampleType) {
 	  case 1:
-		  PwmExample1();
+		  pwmExample1();
 		break;
 
 	  case 2:
 	  default:
-		  PwmExample2();
+		  pwmExample2();
 		break;
 	}
 }

@@ -16,10 +16,10 @@
 /*----------------------------------------------------------------------
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
-extern void SCI_INIT(void);
-extern int SCI_PRINTF(const char *fmt, ...);
-extern int SCI_SCANF(const char* fmt, ...);
-extern int SCI_GETS(char *buf, int len);
+extern void sciInit(void);
+extern int sciPrintf(const char *fmt, ...);
+extern int sciScanf(const char* fmt, ...);
+extern int sciGets(char *buf, int len);
 extern int printf(const char *fmt, ...);
 
 /*----------------------------------------------------------------------
@@ -42,7 +42,7 @@ extern CDC_LINE_CODING CDC_LineCoding;
  *	1: エコーバック
  *	2: printf(), scanf()
  *===============================================================================*/
-extern void SCI_EXAMPLE(int exampleType);
+extern void sciExample(int exampleType);
 #endif // EXAMPLE
 
 #endif // _SCI_H_

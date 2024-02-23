@@ -23,12 +23,12 @@ volatile static unsigned char cancelTimer = 0;
 /*----------------------------------------------------------------------
  * 指定時間後に起動する関数
  *----------------------------------------------------------------------*/
-static void (*TIMER_IRQHandler)(void) = 0;
+static void (*timerIRQHandler)(void) = 0;
 
 /*----------------------------------------------------------------------
  * タイマCT32B1の初期化
  *----------------------------------------------------------------------*/
-void TIMER_INIT(void) {
+void timerInit(void) {
 	/*-----------------------------------------
 	 * 16.2 Basic configuration
 	 *-----------------------------------------*/
@@ -42,7 +42,7 @@ void TIMER_INIT(void) {
 	// 16.8.4 PreScale Register (TMR32B1PR)
 	// Bit31:0(PR): Maximum value for the PC
 	// Note: LPC_SYSCON->SYSAHBCLKDIV = 1 --> PCLK = 72MHz
-	LPC_TMR32B1->PR = GetMainClock() / 1000 - 1; //TIMER_PRE_SCALE - 1;
+	LPC_TMR32B1->PR = clkGetMainClock() / 1000 - 1; //TIMER_PRE_SCALE - 1;
 
 	// 16.8.2 Timer Control Register (TMR32B1TCR)
 	LPC_TMR32B1->TCR = 2; // Bit1(CRES): TC and PC are synchronously reset on next positive edge of PCLK
@@ -52,7 +52,7 @@ void TIMER_INIT(void) {
 /*----------------------------------------------------------------------
  * タイマーカウンタの読み出し
  *----------------------------------------------------------------------*/
-inline unsigned long TIMER_READ(void) {
+inline unsigned long timerRead(void) {
 	// 16.8.3 Timer Counter (TMR32B0TC)
 	return LPC_TMR32B1->TC;
 }
@@ -60,9 +60,9 @@ inline unsigned long TIMER_READ(void) {
 /*----------------------------------------------------------------------
  * 指定時間後に割り込みを起動する
  *----------------------------------------------------------------------*/
-void TIMER_WAKEUP(unsigned long msec, void (*f)(void)) {
+void timerWakeup(unsigned long msec, void (*f)(void)) {
 	// 実行する関数を登録
-	TIMER_IRQHandler = f;
+	timerIRQHandler = f;
 
 	// 16.8.6 Match Control Register (TMR32B1MCR)
 	// Bit 0(MR0I): Enable interrupt when MR0 matches TC
@@ -76,7 +76,7 @@ void TIMER_WAKEUP(unsigned long msec, void (*f)(void)) {
 	// 16.8.7 Match Registers (TMR32B1MRn)
 	// Bit 31:0 (MATCH): Timer counter match value
 	// Note: Initial value is required before timer start
-	LPC_TMR32B1->MR0 = TIMER_READ() + MAX(1, msec);
+	LPC_TMR32B1->MR0 = timerRead() + MAX(1, msec);
 
 	// Configure CT32B1_MAT0 to go from High to Low for Deep Sleep mode
 	// 16.8.10 External Match Register (TMR32B1EMR)
@@ -107,8 +107,8 @@ void TIMER32_1_IRQHandler(void) {
 	LPC_TMR32B1->IR = IR; // Required
 
 	// 登録された関数を呼び出す
-	if (TIMER_IRQHandler) {
-		TIMER_IRQHandler();
+	if (timerIRQHandler) {
+		timerIRQHandler();
 	}
 }
 
@@ -117,21 +117,21 @@ void TIMER32_1_IRQHandler(void) {
  *----------------------------------------------------------------------*/
 #define	SOFTWARE_WAIT	2000UL // ソフトウェアタイマーの1msec当たりの空ループ回数
 
-void __attribute__((optimize("O0"))) WAIT(unsigned long msec) {
+void __attribute__((optimize("O0"))) timerWait(unsigned long msec) {
 	// キャンセルフラグを初期化する
 	cancelTimer = 0;
 
 	// 16.8.2 Timer Control Register (TMR32B1TCR)
 	// Bit0(CEN) : TC and PC are enabled for counting
 	if (LPC_TMR32B1->TCR & 1) {
-		unsigned long count = TIMER_READ() + msec;
-		while (!cancelTimer && count > TIMER_READ()) {
+		unsigned long count = timerRead() + msec;
+		while (!cancelTimer && count > timerRead()) {
 			__NOP();
 		}
 	}
 
 	// Software timer
-	// TIMER_INIT()が実行されなかった場合は空ループで代替する
+	// timerInit()が実行されなかった場合は空ループで代替する
 	else {
 		// Disable optimization and force the counter to be placed into memory
 		volatile static unsigned long i;
@@ -144,6 +144,6 @@ void __attribute__((optimize("O0"))) WAIT(unsigned long msec) {
 /*----------------------------------------------------------------------
  * 待機のキャンセル
  *----------------------------------------------------------------------*/
-void WAIT_CANCEL(void) {
+void timerWaitCancel(void) {
 	cancelTimer = 1;
 }

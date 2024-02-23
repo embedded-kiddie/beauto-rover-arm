@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "sci.h"
 #else
-#define	SCI_PRINTF(...)
+#define	sciPrintf(...)
 #endif
 
 /*----------------------------------------------------------------------
@@ -34,12 +34,12 @@
  *----------------------------------------------------------------------*/
 #if	(CALIBRATION_METHOD == 1)
 // 左右差を校正する
-#define	NormalizeL(L, c)	(((L) - (c).offsetL) * (c).gainL / 100)
-#define	NormalizeR(R, c)	(((R) - (c).offsetR) * (c).gainR / 100)
+#define	normalizeL(L, c)	(((L) - (c).offsetL) * (c).gainL / 100)
+#define	normalizeR(R, c)	(((R) - (c).offsetR) * (c).gainR / 100)
 #else
 // 左右差は校正しない
-#define	NormalizeL(L, c)	((L) - (c).offset)
-#define	NormalizeR(R, c)	((R) + (c).offset)
+#define	normalizeL(L, c)	((L) - (c).offset)
+#define	normalizeR(R, c)	((R) + (c).offset)
 #endif
 
 /*----------------------------------------------------------------------
@@ -56,14 +56,14 @@
  *     |
  * ----+--->X
  *----------------------------------------------------------------------*/
-static short AdjustCenter(void)
+static short adjustCenter(void)
 {
     int i, offset = 0;
     unsigned short L, R;
 
     // 中央における左右間の偏差を観測する
     for (i = 0; i < N_SAMPLES; i++) {
-        ADC_READ2(&L, &R);
+        adcRead2(&L, &R);
         offset += (int)(L - R);
     }
 
@@ -81,7 +81,7 @@ static short AdjustCenter(void)
  * 2. ラインを跨ぐように車体を回転させ、左右差の最大、最小を観測する
  * 3. 左右それぞれのセンサ出力を正規化するための補正係数を算出する
  *----------------------------------------------------------------------*/
-static short CalibrateIR(CalibrateIR_t *cal) {
+static short calibrateIR(CalibrateIR_t *cal) {
 	int i, j;
 	short offset, pwm;				// 原点オフセット平均値、モーター出力値
 	unsigned short L, minL, maxL;	// 左のセンサ値、最小値、最大値
@@ -93,7 +93,7 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 #endif
 
 	// 原点オフセット平均値を観測する
-	offset = AdjustCenter();
+	offset = adjustCenter();
 
 	minL = minR = 0xFFF;
 	maxL = maxR = 0;
@@ -102,16 +102,16 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 	// i = 1; 中央 → 右回転 → 左回転 → 中央
 	for (pwm = MTR_POWER, i = 0; i < 2; i++, pwm = -pwm) {
 		for (j = 0; j < N_SAMPLES; j++) {
-			WAIT(10);
+			timerWait(10);
 
 			if (j < N_SAMPLES / 2) {
-				PWM_OUT(+pwm, -pwm); // p > 0: 左回転, p < 0: 右回転
+				pwmOut(+pwm, -pwm); // p > 0: 左回転, p < 0: 右回転
 			} else {
-				PWM_OUT(-pwm, +pwm); // p > 0: 右回転, p < 0: 左回転
+				pwmOut(-pwm, +pwm); // p > 0: 右回転, p < 0: 左回転
 			}
 
 			// 左右センサの値を読み込む
-			ADC_READ2(&L, &R);
+			adcRead2(&L, &R);
 
 			// センサ位置のオフセットを補正する
 			//L -= offset;
@@ -130,14 +130,14 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 
 			if (j == N_SAMPLES / 2 - 1) {
 				// 慣性モーメントがゼロになる様、完全に停止させる
-				PWM_OUT(0, 0);
-				WAIT(100);
+				pwmOut(0, 0);
+				timerWait(100);
 			}
 		}
 
 		// 慣性モーメントがゼロになる様、完全に停止させる
-		PWM_OUT(0, 0);
-		WAIT(100);
+		pwmOut(0, 0);
+		timerWait(100);
 	}
 
 	// キャリブレーションパラメータを設定する
@@ -150,26 +150,26 @@ static short CalibrateIR(CalibrateIR_t *cal) {
 
 #if TRACE_DEBUG
 	// USBケーブルの接続し、通信の成立を確認する
-	while (!SW_CLICK()) { LED_FLUSH(100); }
-	SCI_INIT();		// 通信確立を確認し、
-	SW_STANDBY();	// スイッチを押したら出力開始
+	while (!swClick()) { ledFlush(100); }
+	sciInit();		// 通信確立を確認し、
+	swStandby();	// スイッチを押したら出力開始
 
 	// 補正係数用パラメータを出力する
-	SCI_PRINTF("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
-	SCI_PRINTF("0,%d,%d,%d,%d,%d,%d,%d\r\n", offset, minL, maxL, cal->gainL, minR, maxR, cal->gainR);
-	SCI_PRINTF("#No,L,R,L - R,L',R',L' - R'\r\n");
+	sciPrintf("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
+	sciPrintf("0,%d,%d,%d,%d,%d,%d,%d\r\n", offset, minL, maxL, cal->gainL, minR, maxR, cal->gainR);
+	sciPrintf("#No,L,R,L - R,L',R',L' - R'\r\n");
 
 	// キャリブレーション前後の値を出力する
 	for (i = 0; i < n; i++) {
 		// 原点オフセット平均値のみ、左右の正規化なし
 		L = IR[i].L - offset;
 		R = IR[i].R + offset;
-		SCI_PRINTF("%d,%d,%d,%d,", i + 1, L, R, (short)(L - R));
+		sciPrintf("%d,%d,%d,%d,", i + 1, L, R, (short)(L - R));
 
 		// 左右の正規化あり
 		L = (IR[i].L - cal->offsetL) * cal->gainL / 100;
 		R = (IR[i].R - cal->offsetR) * cal->gainR / 100;
-		SCI_PRINTF("%d,%d,%d\r\n", L, R, (short)(L - R));
+		sciPrintf("%d,%d,%d\r\n", L, R, (short)(L - R));
 	}
 #endif
 
@@ -180,9 +180,9 @@ static short CalibrateIR(CalibrateIR_t *cal) {
  * ライントレース - 赤外線センサの特性計測
  *	- TRACE_DEBUG を 1 に設定、計測結果をシリアル通信経由でホストPCに送信する
  *----------------------------------------------------------------------*/
-static void TraceRun0(void) {
+static void traceRun0(void) {
 	CalibrateIR_t cal;
-	CalibrateIR(&cal);
+	(void)calibrateIR(&cal);
 }
 
 /*----------------------------------------------------------------------
@@ -196,39 +196,39 @@ static const PID_t G1 = {
 	14000			// 旋回成分の制御量
 };
 
-static void TraceRun1(void) {
+static void traceRun1(void) {
 	int L, R, E;	// 左右センサ値、偏差
 
 	// 赤外線センサのキャリブレーション
 	CalibrateIR_t cal;
-	(void)CalibrateIR(&cal);
+	(void)calibrateIR(&cal);
 
 	while (1) {
-		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
-		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
+		L = adcRead(ADC_LEFT );	// 左赤外線センサ値を読み込む
+		R = adcRead(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
-		L = NormalizeL(L, cal);		// 左赤外線センサ値を正規化する
-		R = NormalizeR(R, cal);		// 右赤外線センサ値を正規化する
+		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
 
 		// 中心からのずれを算出する
 		E = L - R;
 
 		// 右寄りのズレが大きければ左に曲げる
 		if (E > 0 && L > IR_CENTER) {
-			PWM_OUT(-G1.TURNING/2, G1.TURNING);
-			LED(LED1);
+			pwmOut(-G1.TURNING/2, G1.TURNING);
+			ledOn(LED1);
 		}
 
 		// 左寄りのズレが大きければ右に曲げる
 		else if (E < 0 && R > IR_CENTER) {
-			PWM_OUT(G1.TURNING, -G1.TURNING/2);
-			LED(LED1);
+			pwmOut(G1.TURNING, -G1.TURNING/2);
+			ledOn(LED1);
 		}
 
 		// 中央付近なら直進する
 		else {
-			PWM_OUT(G1.FORWARD, G1.FORWARD);
-			LED(LED2);
+			pwmOut(G1.FORWARD, G1.FORWARD);
+			ledOn(LED2);
 		}
 	}
 }
@@ -254,20 +254,20 @@ static const PID_t G2 = {
 #endif
 };
 
-static void TraceRun2(void) {
+static void traceRun2(void) {
 	int L, R, E;	// 左右センサ値、偏差
 	int P;			// 旋回の比例成分
 
 	// 赤外線センサのキャリブレーション
 	CalibrateIR_t cal;
-	(void)CalibrateIR(&cal);
+	(void)calibrateIR(&cal);
 
 	while (1) {
-		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
-		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
+		L = adcRead(ADC_LEFT );	// 左赤外線センサ値を読み込む
+		R = adcRead(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
-		L = NormalizeL(L, cal);		// 左赤外線センサ値を正規化する
-		R = NormalizeR(R, cal);		// 右赤外線センサ値を正規化する
+		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
 
 		// トレースライン中心からの偏差を算出する
 		E = L - R;
@@ -277,20 +277,20 @@ static void TraceRun2(void) {
 
 		// 右寄りのズレが大きければ左に曲げる
 		if (E > 0 && L > IR_CENTER) {
-			PWM_OUT(G2.TURNING - ABS(P), G2.FORWARD);
-			LED(LED1);
+			pwmOut(G2.TURNING - ABS(P), G2.FORWARD);
+			ledOn(LED1);
 		}
 
 		// 左寄りのズレが大きければ右に曲げる
 		else if (E < 0 && R > IR_CENTER) {
-			PWM_OUT(G2.FORWARD, G2.TURNING - ABS(P));
-			LED(LED1);
+			pwmOut(G2.FORWARD, G2.TURNING - ABS(P));
+			ledOn(LED1);
 		}
 
 		// 中央付近なら直進する
 		else {
-			PWM_OUT(G2.FORWARD, G2.FORWARD);
-			LED(LED2);
+			pwmOut(G2.FORWARD, G2.FORWARD);
+			ledOn(LED2);
 		}
 	}
 }
@@ -317,7 +317,7 @@ static const PID_t G3 = {
 #endif
 };
 
-static void TraceRun3(void) {
+static void traceRun3(void) {
 	int L, R;		// 左右の赤外線センサ値
 	int F, T;		// 前進成分、旋回成分の制御量
 	int P, Q = 0;	// P項の元となる偏差、前回偏差
@@ -325,14 +325,14 @@ static void TraceRun3(void) {
 
 	// 赤外線センサのキャリブレーション
 	CalibrateIR_t cal;
-	(void)CalibrateIR(&cal);
+	(void)calibrateIR(&cal);
 
 	while (1) {
-		L = ADC_READ(ADC_LEFT );	// 左赤外線センサ値を読み込む
-		R = ADC_READ(ADC_RIGHT);	// 右赤外線センサ値を読み込む
+		L = adcRead(ADC_LEFT );	// 左赤外線センサ値を読み込む
+		R = adcRead(ADC_RIGHT);	// 右赤外線センサ値を読み込む
 
-		L = NormalizeL(L, cal);		// 左赤外線センサ値を正規化する
-		R = NormalizeR(R, cal);		// 右赤外線センサ値を正規化する
+		L = normalizeL(L, cal);		// 左赤外線センサ値を正規化する
+		R = normalizeR(R, cal);		// 右赤外線センサ値を正規化する
 
 		/*-----------------------------------------
 		 * 旋回成分の算出 - PD制御量
@@ -350,25 +350,25 @@ static void TraceRun3(void) {
 		/*-----------------------------------------
 		 * 前進成分と旋回成分を足し合わせて走行
 		 *-----------------------------------------*/
-		PWM_OUT(F - T, F + T);
+		pwmOut(F - T, F + T);
 
-		LED(P > 0 ? LED2 : LED1);
+		ledOn(P > 0 ? LED2 : LED1);
 	}
 }
 
 /*----------------------------------------------------------------------
  * ライントレース - PD制御 + 楽譜再生
  *----------------------------------------------------------------------*/
-static void TraceRun4(void) {
+static void traceRun4(void) {
 	const MusicScore_t ms[] = {
 #include "truth.dat"	// tempo = 155
 	};
 
 	// バックグラウンドで演奏
-	PLAY(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
+	playScore(ms, sizeof(ms) / sizeof(MusicScore_t), 155, -1);
 
 	// ライントレース - PD制御
-	TraceRun3();
+	traceRun3();
 }
 
 /*----------------------------------------------------------------------
@@ -380,39 +380,39 @@ static void TraceRun4(void) {
  *	3: PD制御によるライントレース
  *	4: PD制御によるライントレース＋バックグラウンド演奏
  *----------------------------------------------------------------------*/
-void TRACE_RUN(int runMode) {
+void traceRun(int runMode) {
 	unsigned long t0, t1;
 	const MusicScore_t ms = {Ra6, N16};
 
-	TIMER_INIT();	// WAIT()
-	GPIO_INIT();	// SW_STANDBY()
-	ADC_INIT();		// A/D変換の初期化
-	PWM_INIT();		// PWM出力の初期化
-	PLAY_INIT();	// PLAY()
+	timerInit();	// timerWait()
+	gpioInit();		// swStandby()
+	adcInit();		// A/D変換の初期化
+	pwmInit();		// PWM出力の初期化
+	playInit();		// playScore()
 
-	LED(LED_ON);	// LEDを点灯
+	ledOn(LED_ON);	// LEDを点灯
 
 	// スイッチが押されるまで待機
-	while (SW_SCAN() == SW_OFF);
+	while (swScan() == SW_OFF);
 
 	// スイッチが押された秒数に応じた走行モードを設定する
-	t0 = TIMER_READ();
-	while (SW_SCAN() == SW_ON) {
-		t1 = TIMER_READ();
-		if (t1 - t0 == 1000) {PLAY(&ms, 1, 180, 0); runMode = 1;} else
-		if (t1 - t0 == 2000) {PLAY(&ms, 1, 180, 0); runMode = 2;} else
-		if (t1 - t0 == 3000) {PLAY(&ms, 1, 180, 0); runMode = 3;} else
-		if (t1 - t0 == 4000) {PLAY(&ms, 1, 180, 0); runMode = 4;}
+	t0 = timerRead();
+	while (swScan() == SW_ON) {
+		t1 = timerRead();
+		if (t1 - t0 == 1000) {playScore(&ms, 1, 180, 0); runMode = 1;} else
+		if (t1 - t0 == 2000) {playScore(&ms, 1, 180, 0); runMode = 2;} else
+		if (t1 - t0 == 3000) {playScore(&ms, 1, 180, 0); runMode = 3;} else
+		if (t1 - t0 == 4000) {playScore(&ms, 1, 180, 0); runMode = 4;}
 	}
 
 	// 少し待ってからスタート
-	WAIT(500);
+	timerWait(500);
 
 	switch (runMode) {
-	  case 0:	TraceRun0(); break;
-	  case 1:	TraceRun1(); break;
-	  case 2:	TraceRun2(); break;
-	  case 3:	TraceRun3(); break;
-	  default:	TraceRun4(); break;
+	  case 0:	traceRun0(); break;
+	  case 1:	traceRun1(); break;
+	  case 2:	traceRun2(); break;
+	  case 3:	traceRun3(); break;
+	  default:	traceRun4(); break;
 	}
 }

@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "sci.h"
 #else
-#define	SCI_PRINTF(...)
+#define	sciPrintf(...)
 #endif
 
 #include "type.h"
@@ -31,7 +31,7 @@
  *----------------------------------------------------------------------*/
 // 3.5.8 Watchdog oscillator control register (WDTOSCCTRL)
 // Bit 8:5 (FREQSEL) Select watchdog oscillator analog output frequency (Fclkana)
-static const unsigned long WdtOSCFreq[] = {
+static const unsigned long wdtOSCFreq[] = {
 	0UL,		// WDT_FREQSEL_ILLEGAL
 	600000UL,	// WDT_FREQSEL_0_60
 	1050000UL,	// WDT_FREQSEL_1_05
@@ -53,8 +53,8 @@ static const unsigned long WdtOSCFreq[] = {
 /*----------------------------------------------------------------------
  * メインクロックの発信源を変更する
  *----------------------------------------------------------------------*/
-void SwitchMainClockSrc(int src) {
-	extern void TIMER_INIT(void);
+void clkSwitchMainClockSrc(int src) {
+	extern void timerInit(void);
 
 	switch (src) {
 	  case CLK_SRC_IRCOSC:	// 0: 12[MHz]
@@ -76,13 +76,13 @@ void SwitchMainClockSrc(int src) {
 	LPC_SYSCON->SYSAHBCLKDIV = 1; // Divide by 1 and enable WDCLK
 
 	// タイマープリスケールを更新する
-	TIMER_INIT();
+	timerInit();
 
 #if	CLK_DEBUG
 	// Watchdog oscillator の場合、周波数が低過ぎてシリアル通信ができない
 	if ((LPC_SYSCON->MAINCLKSEL & 0x3) != CLK_SRC_WDTOSC) {
-		SCI_PRINTF("Main clock source = %d\r\n", LPC_SYSCON->MAINCLKSEL);
-		SCI_PRINTF("Main clock frequency = %d\r\n", GetMainClock());
+		sciPrintf("Main clock source = %d\r\n", LPC_SYSCON->MAINCLKSEL);
+		sciPrintf("Main clock frequency = %d\r\n", clkGetMainClock());
 	}
 #endif
 }
@@ -90,7 +90,7 @@ void SwitchMainClockSrc(int src) {
 /*----------------------------------------------------------------------
  * ウォッチドッグタイマーのクロック発信源を変更する
  *----------------------------------------------------------------------*/
-void SwitchWDTClockSrc(int src) {
+void clkSwitchWDTClockSrc(int src) {
 	// Select watchdog oscillator for WDT clock source
 	// 3.5.27 WDT clock source select register (WDTCLKSEL)
 	// 3.5.28 WDT clock source update enable register (WDTCLKUEN)
@@ -105,7 +105,7 @@ void SwitchWDTClockSrc(int src) {
 /*----------------------------------------------------------------------
  * ウォッチドッグOSCのクロックを設定する
  *----------------------------------------------------------------------*/
-void SetWDTClock(WDT_FREQSEL_t freqsel, int divsel) {
+void clkSetWDTClock(WDT_FREQSEL_t freqsel, int divsel) {
 	// 3.5.8 Watchdog oscillator control register (WDTOSCCTRL)
 	// Bit 4:0 (DIVSEL), Bit 8:5 (FREQSEL)
 	// wdt_osc_clk = Fclkana/(2 × (1 + DIVSEL))
@@ -116,7 +116,7 @@ void SetWDTClock(WDT_FREQSEL_t freqsel, int divsel) {
 /*----------------------------------------------------------------------
  * ウォッチドッグOSCの周波数を取得する
  *----------------------------------------------------------------------*/
-unsigned long GetWDTClock(void) {
+unsigned long clkGetWDTClock(void) {
 	unsigned long wdtfreq, freqsel, divsel;
 
 	// Calculate Watchdog oscillator frequency divided by DIVSEL
@@ -126,14 +126,14 @@ unsigned long GetWDTClock(void) {
 	// wdt_osc_clk = Fclkana/(2 × (1 + DIVSEL))
 	freqsel = ((LPC_SYSCON->WDTOSCCTRL >> 5) & 0xF);
 	divsel  = (LPC_SYSCON->WDTOSCCTRL & 0x1F);
-	wdtfreq = WdtOSCFreq[freqsel] / ((divsel + 1) << 1);
+	wdtfreq = wdtOSCFreq[freqsel] / ((divsel + 1) << 1);
 
 #if	CLK_DEBUG
 	// Watchdog oscillator の場合、周波数が低過ぎてシリアル通信ができない
 	if ((LPC_SYSCON->MAINCLKSEL & 0x3) != CLK_SRC_WDTOSC) {
-		SCI_PRINTF("freqsel = %d\r\n", freqsel);
-		SCI_PRINTF("divsel  = %d\r\n", divsel );
-		SCI_PRINTF("wdtfreq = %d\r\n", wdtfreq);
+		sciPrintf("freqsel = %d\r\n", freqsel);
+		sciPrintf("divsel  = %d\r\n", divsel );
+		sciPrintf("wdtfreq = %d\r\n", wdtfreq);
 	}
 #endif
 
@@ -143,7 +143,7 @@ unsigned long GetWDTClock(void) {
 /*----------------------------------------------------------------------
  * システムPLLクロックの周波数を取得する
  *----------------------------------------------------------------------*/
-unsigned long GetSysPLLClock(void) {
+unsigned long clkGetSysPLLClock(void) {
 	unsigned long clock = 0;
 
 	// 3.5.11 System PLL clock source select register (SYSPLLCLKSEL)
@@ -164,7 +164,7 @@ unsigned long GetSysPLLClock(void) {
 /*----------------------------------------------------------------------
  * メインクロックの周波数を取得する
  *----------------------------------------------------------------------*/
-unsigned long GetMainClock(void) {
+unsigned long clkGetMainClock(void) {
 	unsigned long clock = 0;
 
 	// 3.5.15 Main clock source select register (MAINCLKSEL)
@@ -174,18 +174,18 @@ unsigned long GetMainClock(void) {
 		break;
 
 	  case CLK_SRC_PLLIN:	// 1: 12[MHz]
-		clock = GetSysPLLClock();
+		clock = clkGetSysPLLClock();
 		break;
 
 	  case CLK_SRC_WDTOSC:	// 2: 9375[Hz]
-		clock = GetWDTClock();
+		clock = clkGetWDTClock();
 		break;
 
 	  case CLK_SRC_PLLOUT:	// 3: 72[MHz]
 		// 3.5.3 System PLL control register (SYSPLLCTRL)
 		// Bit 4:0 (MSEL) Feedback divider value (The division is MSEL + 1)
 		clock = (LPC_SYSCON->SYSPLLCTRL & 0x1F) + 1;
-		clock *= GetSysPLLClock();
+		clock *= clkGetSysPLLClock();
 		break;
 	}
 
