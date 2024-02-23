@@ -52,15 +52,20 @@ static const unsigned long wdtOSCFreq[] = {
 
 /*----------------------------------------------------------------------
  * メインクロックの発信源を変更する
+ * - src
+ * 	CLK_SRC_IRCOSC	IRC oscillator (12[HMz])
+ * 	CLK_SRC_PLLIN	Input clock to system PLL (12[HMz])
+ * 	CLK_SRC_WDTOSC	WDT oscillator (9375[Hz])
+ * 	CLK_SRC_PLLOUT	System PLL clock out (72[HMz])
  *----------------------------------------------------------------------*/
 void clkSwitchMainClockSrc(int src) {
 	extern void timerInit(void);
 
 	switch (src) {
-	  case CLK_SRC_IRCOSC:	// 0: 12[MHz]
-	  case CLK_SRC_PLLIN:	// 1: 12[MHz]
-	  case CLK_SRC_WDTOSC:	// 2: 9375[Hz]
-	  case CLK_SRC_PLLOUT:	// 3: 72[MHz]
+	  case CLK_SRC_IRCOSC:
+	  case CLK_SRC_PLLIN:
+	  case CLK_SRC_WDTOSC:
+	  case CLK_SRC_PLLOUT:
 		break;
 	  default:
 		return;
@@ -89,8 +94,23 @@ void clkSwitchMainClockSrc(int src) {
 
 /*----------------------------------------------------------------------
  * ウォッチドッグタイマーのクロック発信源を変更する
+ * - src
+ * 	CLK_SRC_IRCOSC	IRC oscillator (12[HMz])
+ * 	CLK_SRC_PLLIN	Input clock to system PLL (12[HMz])
+ * 	CLK_SRC_WDTOSC	WDT oscillator (9375[Hz])
+ * 	CLK_SRC_PLLOUT	System PLL clock out (72[HMz])
  *----------------------------------------------------------------------*/
 void clkSwitchWDTClockSrc(int src) {
+	switch (src) {
+	  case CLK_SRC_IRCOSC:
+	  case CLK_SRC_PLLIN:
+	  case CLK_SRC_WDTOSC:
+	  case CLK_SRC_PLLOUT:
+		break;
+	  default:
+		return;
+	}
+
 	// Select watchdog oscillator for WDT clock source
 	// 3.5.27 WDT clock source select register (WDTCLKSEL)
 	// 3.5.28 WDT clock source update enable register (WDTCLKUEN)
