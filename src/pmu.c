@@ -327,7 +327,7 @@ unsigned int pmuSleep(int mode) {
  * 【EXAMPLE2】
  *	内部割込み（タイマー割込み）、または外部割込み（スイッチによる割込み）でタスクを起動する
  *	・INTERRUPT_FROM = INTERNAL_TIMER （0, 内部割込み）の場合
- *	  PMW_WAKEUP() によるタイマー割り込みでタスクを起動する
+ *	  pwmWakeup() によるタイマー割り込みでタスクを起動する
  *
  *	・INTERRUPT_FROM = EXTERNAL_SWITCH （1, 外部割込み）の場合
  *	  スイッチによる割り込みでタスクを起動する
@@ -392,7 +392,7 @@ static void pmuExample2() {
 /*----------------------------------------------------------------------
  * パワーマネジメントユニットの動作例
  * - exampleType
- *	1: Active mode　でのスリープ
+ *	1: Active mode　で一定周期でタスクを起動
  *	2: Sleep/Deep-sleep/Deep Power-down
  *----------------------------------------------------------------------*/
 void pmuExample(int exampleType) {
