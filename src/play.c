@@ -313,6 +313,9 @@ void TIMER32_0_IRQHandler(void) {
 			} else if (loopPlay) {
 				// 指定時間（loopPlay[msec]）だけインターバルをとる
 				playInterval(loopPlay);
+			} else {
+				// 再生終了の場合は、繰り返し再生用の楽譜を初期化する
+				loopPtr = 0;
 			}
 		} else {
 			// インターバル後（scorePtr=0 かつ countIRQ=0）に元データを設定し、再生を再開する
