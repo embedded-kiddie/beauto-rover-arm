@@ -164,8 +164,8 @@ void ledOn(unsigned char led) {
 }
 
 void ledOff(unsigned char led) {
-	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED1, (led & LED1));	// Low active
-	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED2, (led & LED2));	// Low active
+	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED1, !(~led & LED1));	// Low active
+	gpioSetBit(LPC_GPIO0, GPIO_BIT_LED2, !(~led & LED2));	// Low active
 }
 
 /*----------------------------------------------------------------------
