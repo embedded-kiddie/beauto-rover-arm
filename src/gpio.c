@@ -14,7 +14,6 @@
 #include "type.h"
 #include "gpio.h"
 #include "timer.h"
-#include "play.h"
 
 /*----------------------------------------------------------------------
  * 9.4.2　GPIO data direction register (GPIO0DIR)
@@ -252,6 +251,7 @@ void swWatch(void (*f)(void)) {
 	gpioSetInterrupt(0, GPIO_BIT_SW1, 0, 0, f);
 }
 
+#if	FALSE
 /*----------------------------------------------------------------------
  * スイッチが短くクリックされたらONを、長押しされた場合はHOLDを返す
  *----------------------------------------------------------------------*/
@@ -278,7 +278,14 @@ int swClickHold(unsigned long msec) {
 
 /*----------------------------------------------------------------------
  * 指定された整数値をLEDに出力する
+ *
+ * - 使用例
+ *	// スイッチを押すごとにLSBから2ビットずつLED1（上位）とLED2（下位）で値を表示する
+ *	playInit();
+ *	showValue(0xffff);
  *----------------------------------------------------------------------*/
+#include "play.h"
+
 #define	CLICK_HOLD_TIME	1000	// 長押し判定時間[sec]
 
 void showValue(long val) {
@@ -325,6 +332,7 @@ void showValue(long val) {
 		}
 	}
 }
+#endif // FALSE
 
 #ifdef	EXAMPLE
 /*===============================================================================
@@ -350,7 +358,6 @@ void exitLoop(void) {
 void gpioExample(void) {
 	timerInit();			// timerWait()
 	gpioInit();				// swStandby()
-	playInit();				// showValue() で短音を鳴らす
 
 	ledOn(LED1|LED2);		// LED1とLED2を点灯させる
 	swStandby();			// スイッチが押されるまで待機
@@ -363,7 +370,5 @@ void gpioExample(void) {
 	while (loopFlag) {		// スイッチの割り込みが検知されたらループを抜ける
 		ledFlush(500);		// LED1:500[msec] + LED2:500[msec]
 	}
-
-	showValue(0xffff);		// スイッチを押すごとにLSBから2ビットずつLED1（上位）とLED2（下位）で値を表示する
 }
 #endif // EXAMPLE
