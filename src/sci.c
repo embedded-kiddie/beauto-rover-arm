@@ -115,7 +115,7 @@ int sciGets(char *buf, int len) {
 /*--------------------------------------------------------------------------
  * シリアル通信入力 - 書式指定付き入力（簡易版）
  *--------------------------------------------------------------------------*/
-int sciScanf(const char* fmt, ...) {
+int sciScanf(const char* restrict fmt, ...) {
 	int len = 1;
 	char buf[SCI_BUF_SIZE];
 	const char *p = fmt;
@@ -148,6 +148,23 @@ int sciScanf(const char* fmt, ...) {
 	va_end(arg_ptr);
 	return len;
 }
+
+#if	FALSE
+/*--------------------------------------------------------------------------
+ * シリアル通信入力 - scanf()
+ * - redlibで定義済みだが、オーバーライドするシステムコールが不明なため使えない
+ *--------------------------------------------------------------------------*/
+int scanf(const char* restrict fmt, ...) {
+	int len;
+
+	va_list arg_ptr;
+	va_start(arg_ptr, fmt);
+	len = sciScanf(fmt, arg_ptr);
+	va_end(arg_ptr);
+
+	return len;
+}
+#endif // FALSE
 
 /*--------------------------------------------------------------------------
  * printf()、scanf()用システムコール
