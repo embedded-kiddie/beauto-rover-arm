@@ -39,17 +39,6 @@ extern void delay	(uint32_t length);	// defined in usbhw.c
  *----------------------------------------------------------------------*/
 void sciInit(void)
 {
-	// 7.4.18 IOCON_PIO0_6 (PIO0_6/USB_CONNECT/SCK)
-	// Bit 2:0 FUNC
-	// 0x0 = Selects function PIO0_6
-	// 0x1 = Selects function USB_CONNECT
-	// 0x2 = Selects function SCK0
-#ifdef gpioSetBit
-	gpioSetBit(LPC_GPIO0, 6, 1);
-#else
-	LPC_GPIO0->MASKED_ACCESS[(1 << 6)] = (1 << 6);
-#endif
-
 	SciInit(); // defined in cdcuser.c
 }
 
