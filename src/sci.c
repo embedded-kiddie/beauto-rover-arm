@@ -114,6 +114,12 @@ int sciGets(char *buf, int len) {
 
 /*--------------------------------------------------------------------------
  * シリアル通信入力 - 書式指定付き入力（簡易版）
+ * - 制限事項
+ * 	・１回に入力できる変数は１つのみ
+ * 	  NG例： sciScanf("%d%f", &i, &f);
+ * 	・代入抑止文字 '*' は使用不可
+ * 	・最大フィールド幅（正の10進数で指定される文字数）は指定可能
+ * 	・型指定子は 'c'、's'、'd'、'x'、'f'、'ld'、'lx'、'lf' のみ可能
  *--------------------------------------------------------------------------*/
 int sciScanf(const char* restrict fmt, ...) {
 	int len = 1;
@@ -139,7 +145,20 @@ int sciScanf(const char* restrict fmt, ...) {
 		sscanf(buf, fmt, va_arg(arg_ptr, char*));
 		break;
 	  case 'f':
-		sscanf(buf, fmt, va_arg(arg_ptr, double*));
+		sscanf(buf, fmt, va_arg(arg_ptr, float*));
+		break;
+	  case 'l':
+		switch(*(p+1)) {
+		  case 'd':
+		  case 'x':
+			sscanf(buf, fmt, va_arg(arg_ptr, long*));
+			break;
+		  case 'f':
+			sscanf(buf, fmt, va_arg(arg_ptr, double*));
+			break;
+		  default:
+			len = 0;
+		}
 		break;
 	  default:
 		len = 0;
@@ -257,7 +276,7 @@ void sciExample1(void) {
  * 動作例2: printf(), scanf()
  *----------------------------------------------------------------------*/
 void sciExample2(void) {
-	int i = 0;
+	double f = 0.0;
 	const char *txt = "0123456789012345678901234567890123456789012345678901234567890123456789\r\n";
 
 	CDC_SetLineCoding();
@@ -272,8 +291,8 @@ void sciExample2(void) {
 	printf(txt); // ヌル文字に関係なく64文字でカット
 
 	printf("%sPlease input a number: ", "\r\n");
-	sciScanf("%8d", &i); // scanf()は動作せず
-	printf("%sYour input is '%d'.", "\r\n", i);
+	sciScanf("%8lf", &f); // scanf()は動作せず
+	printf("%sYour input is '%f'.", "\r\n", f);
 
 	while (1) {
 		printf("\e[%d;%dH Timer = %10ld", 10, 30, timerRead());
