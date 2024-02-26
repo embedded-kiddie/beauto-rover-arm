@@ -220,7 +220,6 @@ int __sys_readc(void) {
  * - 921600bpsまで動作確認済み
  *===============================================================================*/
 #include <stdio.h>
-#include "type.h"
 #include "timer.h"
 #include "gpio.h"
 #include "sci.h"
