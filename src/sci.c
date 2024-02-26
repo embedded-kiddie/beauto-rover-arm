@@ -56,7 +56,7 @@ void sciInit(void)
 /*--------------------------------------------------------------------------
  * シリアル通信出力 - 書式指定付き出力
  *--------------------------------------------------------------------------*/
-int sciPrintf(const char *fmt, ...)
+int sciPrintf(const char* restrict fmt, ...)
 {
 	int len = 0;
 	/*static*/ char buf[SCI_BUF_SIZE];

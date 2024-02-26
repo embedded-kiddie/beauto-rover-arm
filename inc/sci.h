@@ -17,10 +17,10 @@
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
 extern void sciInit(void);
-extern int sciPrintf(const char *fmt, ...);
-extern int sciScanf(const char* fmt, ...);
+extern int sciPrintf(const char* restrict fmt, ...);
+extern int sciScanf(const char* restrict fmt, ...);
 extern int sciGets(char *buf, int len);
-extern int printf(const char *fmt, ...);
+extern int printf(const char* restrict fmt, ...);
 
 /*----------------------------------------------------------------------
  * 通信設定を取得する関数とその変数（cdcuser.c）
