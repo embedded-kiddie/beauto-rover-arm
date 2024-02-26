@@ -16,7 +16,6 @@
 #include <stdarg.h>
 
 #include "type.h"
-#include "timer.h"
 #include "gpio.h"
 #include "sci.h"
 
@@ -33,7 +32,8 @@
  * 待ち時間の設定
  * 1[msec]に設定すると、921600bpsで送信失敗が発生する
  *----------------------------------------------------------------------*/
-#define	SCI_WAIT	5	// [msec]
+#define	SCI_WAIT	(2000UL * 5	/ 1000)	// [5msec]
+extern void delay	(uint32_t length);	// defined in usbhw.c
 
 /*----------------------------------------------------------------------
  * シリアル通信I/F - 初期化
@@ -67,7 +67,7 @@ int sciPrintf(const char *fmt, ...)
 	SciStrTx((unsigned char*)buf, (unsigned char)len);
 
 	// 次の送信まで間を空ける
-	timerWait(SCI_WAIT);
+	delay(SCI_WAIT);
 
 	return len;
 }
@@ -188,7 +188,7 @@ int __sys_write(int iFileHandle, char *pcBuffer, int iLength) {
 	SciStrTx((unsigned char*)pcBuffer, (unsigned char)iLength);
 
 	// 次の送信まで間を空ける
-	timerWait(SCI_WAIT);
+	delay(SCI_WAIT);
 
 	return 0;
 }
@@ -218,6 +218,7 @@ int __sys_readc(void) {
  *===============================================================================*/
 #include <stdio.h>
 #include "type.h"
+#include "timer.h"
 #include "gpio.h"
 #include "sci.h"
 
