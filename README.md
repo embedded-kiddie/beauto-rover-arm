@@ -4,11 +4,13 @@
 ## 本リポジトリの目的
 Vstone社製 [ビュートローバーARM] に付属のライブラリ `vs-wrc103.c` を使わず、[LPC1343] のCPU依存部分を定義した `CMSIS_CORE_LPC13xx` を元にライントレース用コードベースのハーフスクラッチ開発に取り組んだところ、とても勉強になったので、ここに情報を共有します。
 
-本リポジトリはソースコードが流用されることを目的としてはいません。流用するなら [microbuilder/LPC1343CodeBase] をお勧めします。ここではビュートローバーARMを手にした人たち - おそらくはプログラミングの初学者やロボットに興味のあるホビーストたち - を対象に、参考になる情報を共有し、電子工作としての組み込みプログラミングの楽しさを知ってもらうことを目的としています。
+本リポジトリはソースコードが流用されることを目的としてはいません。流用するなら [LPCOpen] や [microbuilder/LPC1343CodeBase] などが良いでしょう。ここではビュートローバーARMを手にした人たち - おそらくはプログラミングの初学者やロボットに興味のあるホビーストたち - を対象に、参考になる情報を共有し、電子工作としての組み込みプログラミングの楽しさを知ってもらうことを目的としています。
 
 [ビュートローバーARM]: https://www.vstone.co.jp/products/beauto_rover/index.html "Beauto Rover H8/ARM（ビュートローバー） | ヴイストン株式会社"
 
 [LPC1343]: https://www.nxp.jp/products/processors-and-microcontrollers/arm-microcontrollers/general-purpose-mcus/lpc1300-arm-cortex-m3/entry-level-32-bit-microcontroller-mcu-based-on-arm-cortex-m3-core:LPC1343FBD48 "LPC1343FBD48|Arm Cortex-M3|32-bit MCU | NXP Semiconductors"
+
+[LPCOpen]:https://www.nxp.jp/design/design-center/software/software-library/lpcopen-software-development-platform-lpc13xx:LPCOPEN-SOFTWARE-FOR-LPC13XX "LPCOpen Software for LPC13XX | NXP Semiconductors"
 
 [microbuilder/LPC1343CodeBase]: https://github.com/microbuilder/LPC1343CodeBase "Generic GCC-based library for the ARM Cortex-M3 LPC1343"
 
