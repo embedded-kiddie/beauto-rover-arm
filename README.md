@@ -56,6 +56,6 @@ Vstone社製 [ビュートローバーARM] に付属のライブラリ `vs-wrc10
 [ポーリング]: https://ja.wikipedia.org/wiki/%E3%83%9D%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0_(%E6%83%85%E5%A0%B1) "ポーリング (情報) - Wikipedia"
 
 ## Wikiページ
-[Wikiページ] に開発環境の準備から `printf()` デバッグ出来るようになるまでのステップをまとめてあるので、覗いてみて下さい。
+[Wikiページ] に開発環境の準備から `printf()` デバッグ出来るようになるまでのステップをまとめてあるので、参考にして下さい。
 
 [Wikiページ]:https://github.com/embedded-kiddie/beauto-rover-arm/wiki
