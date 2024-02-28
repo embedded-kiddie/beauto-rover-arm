@@ -14,7 +14,7 @@ Vstone社製 [ビュートローバーARM] に付属のライブラリ `vs-wrc10
 
 [microbuilder/LPC1343CodeBase]: https://github.com/microbuilder/LPC1343CodeBase "Generic GCC-based library for the ARM Cortex-M3 LPC1343"
 
-## ハーフスクラッチ開発の背景
+## ハーフスクラッチ開発の勧め
 [ビュートローバーARM][ビュートローバー仕様] には、センサ入力やモーター制御を行うライブラリ関数が用意されていて、C言語の初学者が遊びながらプログラミングを学ぶには良い素材だと思います。A/D変換やPWM（Pulse Width Modulation）の詳細を知らなくても、ビュートローバーを走らせることはできるでしょう。
 
 [ビュートローバー仕様]: https://www.vstone.co.jp/products/beauto_rover/spec.html "ビュートローバーARM/H8 (Beauto Rover) - 製品仕様詳細| ヴイストン株式会社"
