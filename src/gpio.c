@@ -19,12 +19,10 @@
  * 9.4.2　GPIO data direction register (GPIO0DIR)
  *----------------------------------------------------------------------*/
 #ifndef	gpioSetDir
-void gpioSetDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir)
-{
+void gpioSetDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir) {
 	if (dir) {
 		port->DIR |= (1 << bit);	// 出力ポートに設定
-	}
-	else {
+	} else {
 		port->DIR &= ~(1 << bit);	// 入力ポートに設定
 	}
 }
@@ -34,15 +32,13 @@ void gpioSetDir(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t dir)
  * 9.5.1　Write/read data operations (Masked write/read operation)
  *----------------------------------------------------------------------*/
 #ifndef	gpioSetBit
-void gpioSetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t val)
-{
+void gpioSetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit, uint32_t val) {
 	port->MASKED_ACCESS[(1 << bit)] = (val << bit);
 }
 #endif // gpioSetBit
 
 #ifndef	gpioGetBit
-unsigned char gpioGetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit)
-{
+unsigned char gpioGetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit) {
 	return port->MASKED_ACCESS[(1 << bit)];
 }
 #endif // gpioGetBit
@@ -90,9 +86,14 @@ void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t even
 	port->IBE &= ~(1 << pin);
 
 	// 9.4.5 GPIO interrupt event register (GPIO0IEV)
-	// 1 = Depending on setting in register GPIOIS, rising edges
-	// or HIGH level on pin PIOn_x trigger an interrupt.
-	port->IEV |= (1 << pin);
+	// Depending on setting in GPIO interrupt sense register (GPIO0IS)
+	//	0 = Falling edges or LOW level on pin PIOn_x trigger an interrupt.
+	//	1 = Rising edges or HIGH level on pin PIOn_x trigger an interrupt.
+	if (event) {
+		port->IEV |= (1 << pin);
+	} else {
+		port->IEV &= ~(1 << pin);
+	}
 
 	// 9.4.6 GPIO interrupt mask register (GPIO0IE)
 	// 1 = Interrupt on pin PIOn_x is not masked.
@@ -248,7 +249,7 @@ int swStandby(void) {
  * スイッチの立ち上がりエッジ（押されてから離された時）で実行する関数を登録する
  *----------------------------------------------------------------------*/
 void swWatch(void (*f)(void)) {
-	gpioSetInterrupt(0, GPIO_BIT_SW1, 0, 0, f);
+	gpioSetInterrupt(0, GPIO_BIT_SW1, 0, EVENT_RISING, f);
 }
 
 #if	FALSE

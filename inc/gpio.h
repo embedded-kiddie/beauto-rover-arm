@@ -33,6 +33,9 @@ extern unsigned char gpioGetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
  * 9.4.4 GPIO interrupt both edges sense register
  * 9.4.5 GPIO interrupt event register
  *----------------------------------------------------------------------*/
+#define	EVENT_FALLING	0	// エッジの立下がりで割り込みを発生
+#define	EVENT_RISING	1	// エッジの立上がりで割り込みを発生
+
 extern void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void));
 
 /*----------------------------------------------------------------------
