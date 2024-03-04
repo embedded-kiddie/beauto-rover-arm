@@ -264,12 +264,12 @@ void pwmExample(int exampleType) {
 
 	switch (exampleType) {
 	  case 1:
-		  pwmExample1();
+		pwmExample1();
 		break;
 
 	  case 2:
 	  default:
-		  pwmExample2();
+		pwmExample2();
 		break;
 	}
 }
