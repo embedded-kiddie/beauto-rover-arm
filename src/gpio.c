@@ -249,7 +249,7 @@ int swStandby(void) {
  * スイッチの立ち上がりエッジ（押されてから離された時）で実行する関数を登録する
  *----------------------------------------------------------------------*/
 void swWatch(void (*f)(void)) {
-	gpioSetInterrupt(0, GPIO_BIT_SW1, 0, EVENT_RISING, f);
+	gpioSetInterrupt(0, GPIO_BIT_SW1, SENSITIVE_EDGE, EVENT_RISING, f);
 }
 
 #if	FALSE
