@@ -79,7 +79,12 @@ void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t even
 
 	// 9.4.3 GPIO interrupt sense register (GPIO0IS)
 	// 0 = Interrupt on pin PIOn_x is configured as edge sensitive.
-	port->IS &= ~(1 << pin);
+	// 1 = Interrupt on pin PIOn_x is configured as level sensitive.
+	if (sense == SENSITIVE_EDGE) {
+		port->IS &= ~(1 << pin);
+	} else {
+		port->IS |= (1 << pin);
+	}
 
 	// 9.4.4 GPIO interrupt both edges sense register (GPIO0IBE)
 	// 0 = Interrupt on pin PIOn_x is controlled through register GPIOIEV.
@@ -87,9 +92,9 @@ void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t even
 
 	// 9.4.5 GPIO interrupt event register (GPIO0IEV)
 	// Depending on setting in GPIO interrupt sense register (GPIO0IS)
-	//	0 = Falling edges or LOW level on pin PIOn_x trigger an interrupt.
-	//	1 = Rising edges or HIGH level on pin PIOn_x trigger an interrupt.
-	if (event) {
+	// 0 = Falling edges or LOW level on pin PIOn_x trigger an interrupt.
+	// 1 = Rising edges or HIGH level on pin PIOn_x trigger an interrupt.
+	if (event == EVENT_RISING) {
 		port->IEV |= (1 << pin);
 	} else {
 		port->IEV &= ~(1 << pin);
