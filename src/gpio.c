@@ -69,35 +69,55 @@ static GPIO_IRQ_t irqTable[4] = {
  *   __IO uint32_t MIS;  9.4.8 GPIO masked interrupt status register
  *   __IO uint32_t IC;   9.4.9 GPIO interrupt clear register
  * } LPC_GPIO_TypeDef;
+ *
+ * 9.4.3 GPIO interrupt sense register (GPIO0IS)
+ *	0 = Interrupt on pin PIOn_x is configured as edge sensitive.
+ *	1 = Interrupt on pin PIOn_x is configured as level sensitive.
+ *
+ * 9.4.4 GPIO interrupt both edges sense register (GPIO0IBE)
+ *	0 = Interrupt on pin PIOn_x is controlled through register GPIOIEV.
+ *	1 = Both edges on pin PIOn_x trigger an interrupt.
+ *
+ * 9.4.5 GPIO interrupt event register (GPIO0IEV)
+ * Depending on setting in GPIO interrupt sense register (GPIO0IS)
+ *	0 = Falling edges or LOW level on pin PIOn_x trigger an interrupt.
+ *	1 = Rising edges or HIGH level on pin PIOn_x trigger an interrupt.
+ *
+ *           GPIO0IS   GPIO0IBE   GPIO0IEV
+ * FALLING      0          0          0
+ * RISING       0          0          1
+ * CHANGE       0          1          -
+ * LOW          1          -          0
+ * HIGH         1          -          1
  *----------------------------------------------------------------------*/
-void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void)) {
+void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t mode, void (*f)(void)) {
 	__IO LPC_GPIO_TypeDef* port = irqTable[portNo].port;
 
-	// 監視するビットと実行する関数を登録
-	irqTable[portNo].pin = pin;
-	irqTable[portNo].function = f;
-
-	// 9.4.3 GPIO interrupt sense register (GPIO0IS)
-	// 0 = Interrupt on pin PIOn_x is configured as edge sensitive.
-	// 1 = Interrupt on pin PIOn_x is configured as level sensitive.
-	if (sense == SENSITIVE_EDGE) {
-		port->IS &= ~(1 << pin);
-	} else {
-		port->IS |= (1 << pin);
-	}
-
-	// 9.4.4 GPIO interrupt both edges sense register (GPIO0IBE)
-	// 0 = Interrupt on pin PIOn_x is controlled through register GPIOIEV.
-	port->IBE &= ~(1 << pin);
-
-	// 9.4.5 GPIO interrupt event register (GPIO0IEV)
-	// Depending on setting in GPIO interrupt sense register (GPIO0IS)
-	// 0 = Falling edges or LOW level on pin PIOn_x trigger an interrupt.
-	// 1 = Rising edges or HIGH level on pin PIOn_x trigger an interrupt.
-	if (event == EVENT_RISING) {
-		port->IEV |= (1 << pin);
-	} else {
+	switch (mode) {
+	  case INT_MODE_RISING:
+		port->IS  &= ~(1 << pin);
+		port->IBE &= ~(1 << pin);
+		port->IEV |=  (1 << pin);
+		break;
+	  case INT_MODE_FALLING:
+		port->IS  &= ~(1 << pin);
+		port->IBE &= ~(1 << pin);
 		port->IEV &= ~(1 << pin);
+		break;
+	  case INT_MODE_CHANGE:
+		port->IS  &= ~(1 << pin);
+		port->IBE |=  (1 << pin);
+		break;
+	  case INT_MODE_LOW:
+		port->IS  |=  (1 << pin);
+		port->IEV &= ~(1 << pin);
+		break;
+	  case INT_MODE_HIGH:
+		port->IS  |=  (1 << pin);
+		port->IEV |=  (1 << pin);
+		break;
+	  default:
+		return;
 	}
 
 	// 9.4.6 GPIO interrupt mask register (GPIO0IE)
@@ -107,6 +127,10 @@ void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t even
 	// 9.4.9 GPIO interrupt clear register (GPIO0IC)
 	// 1 = Clears edge detection logic for pin PIOn_x.
 	port->IC |= (1 << pin);
+
+	// 監視するビットと実行する関数を登録
+	irqTable[portNo].pin = pin;
+	irqTable[portNo].function = f;
 
 	// IRQn_Type is defined in LPC13xx.h
 	NVIC_EnableIRQ(irqTable[portNo].irqNo);
@@ -254,7 +278,7 @@ int swStandby(void) {
  * スイッチの立ち上がりエッジ（押されてから離された時）で実行する関数を登録する
  *----------------------------------------------------------------------*/
 void swWatch(void (*f)(void)) {
-	gpioSetInterrupt(0, GPIO_BIT_SW1, SENSITIVE_EDGE, EVENT_RISING, f);
+	gpioSetInterrupt(0, GPIO_BIT_SW1, INT_MODE_RISING, f);
 }
 
 #if	FALSE

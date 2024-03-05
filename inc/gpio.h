@@ -33,12 +33,13 @@ extern unsigned char gpioGetBit(__IO LPC_GPIO_TypeDef* port, uint32_t bit);
  * 9.4.4 GPIO interrupt both edges sense register
  * 9.4.5 GPIO interrupt event register
  *----------------------------------------------------------------------*/
-#define	SENSITIVE_EDGE	0	// エッジで割り込みを検出
-#define	SENSITIVE_LEVEL	1	// レベルで割り込みを検出
-#define	EVENT_FALLING	0	// エッジの立下がりで割り込みを検出
-#define	EVENT_RISING	1	// エッジの立上がりで割り込みを検出
+#define	INT_MODE_FALLING	0	// エッジの立下がりで割り込みを検出
+#define	INT_MODE_RISING		1	// エッジの立上がりで割り込みを検出
+#define	INT_MODE_CHANGE		2	// 両エッジで割り込みを検出
+#define	INT_MODE_LOW		3	// LOWレベルで割り込みを検出
+#define	INT_MODE_HIGH		4	// HIGHレベルで割り込みを検出
 
-extern void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t sense, uint8_t event, void (*f)(void));
+extern void gpioSetInterrupt(uint32_t portNo, uint32_t pin, uint8_t mode, void (*f)(void));
 
 /*----------------------------------------------------------------------
  * 割込み処理用テーブル
