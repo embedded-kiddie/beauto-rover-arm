@@ -513,9 +513,9 @@ int playIsPlaying(void) {
  *----------------------------------------------------------------------*/
 void playExample(void) {
 	const MusicScore_t ms[] = {
-//#include "doremi.dat"	// tempo = PLAY_BASE_DURATION
-#include "truth.dat"	// tempo = 155
+//#include "doremi.dat"	// tempo = PLAY_BASE_TEMPO
 //#include "lupin.dat"	// tempo = 132
+#include "truth.dat"	// tempo = 155
 	};
 
 	timerInit();	// timerWait()
