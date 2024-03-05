@@ -55,7 +55,9 @@ static GPIO_IRQ_t irqTable[4] = {
 
 /*----------------------------------------------------------------------
  * 割り込みによるポートの監視設定
- * - Note: 呼び出し前に指定ポートのピンを「入力」に設定すること
+ * - 制約事項
+ *   ・ 1つのポートに設定できる割り込みの監視は1つのピンのみ
+ *   ・ すぐに割り込みがを可するため、指定ポートのピンを「入力」に設定しておくこと
  *
  * Definition General Purpose Input/Output (GPIO) in LPC13xx.h
  * typedef struct {
@@ -70,20 +72,20 @@ static GPIO_IRQ_t irqTable[4] = {
  *   __IO uint32_t IC;   9.4.9 GPIO interrupt clear register
  * } LPC_GPIO_TypeDef;
  *
- * 9.4.3 GPIO interrupt sense register (GPIO0IS)
+ * 9.4.3 GPIO interrupt sense register (GPIOxIS)
  *	0 = Interrupt on pin PIOn_x is configured as edge sensitive.
  *	1 = Interrupt on pin PIOn_x is configured as level sensitive.
  *
- * 9.4.4 GPIO interrupt both edges sense register (GPIO0IBE)
+ * 9.4.4 GPIO interrupt both edges sense register (GPIOxIBE)
  *	0 = Interrupt on pin PIOn_x is controlled through register GPIOIEV.
  *	1 = Both edges on pin PIOn_x trigger an interrupt.
  *
- * 9.4.5 GPIO interrupt event register (GPIO0IEV)
- * Depending on setting in GPIO interrupt sense register (GPIO0IS)
+ * 9.4.5 GPIO interrupt event register (GPIOxIEV)
+ * Depending on setting in GPIO interrupt sense register (GPIOxIS)
  *	0 = Falling edges or LOW level on pin PIOn_x trigger an interrupt.
  *	1 = Rising edges or HIGH level on pin PIOn_x trigger an interrupt.
  *
- *           GPIO0IS   GPIO0IBE   GPIO0IEV
+ *           GPIOxIS   GPIOxIBE   GPIOxIEV
  * FALLING      0          0          0
  * RISING       0          0          1
  * CHANGE       0          1          -
