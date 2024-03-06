@@ -4,7 +4,7 @@
  * Version     :
  * CPU type    : ARM Cortex-M3 LPC1343
  * Copyright   : $(copyright)
- * Description : Pulse Width Demodulator definitions
+ * Description : Pulse Width Demodulator definitions using CT16B0, CT16B1
  *===============================================================================*/
 #ifndef _PWM_H_
 #define _PWM_H_
@@ -13,12 +13,12 @@
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
 extern void pwmInit(void);
-extern void pwmOut(short L, short R);
+extern void pwmOut(int L, int R);
 
 /*----------------------------------------------------------------------
  * PWM出力の最大値
  *----------------------------------------------------------------------*/
-#define	PWM_MAX		(32767)
+#define	PWM_MAX		(0xFFFF)	// 0～65536 (16bits)
 
 #ifdef	EXAMPLE
 /*===============================================================================

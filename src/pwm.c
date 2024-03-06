@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------*/
 #define	PWM_GAIN_RATIO	100		// 百分率
 #define	PWM_GAIN_L		100		// 左駆動系の補正係数
-#define	PWM_GAIN_R		96		// 右駆動系の補正係数
+#define	PWM_GAIN_R		98		// 右駆動系の補正係数
 
 /*----------------------------------------------------------------------
  * 停止時の出力 （FALSE:フリー、TRUE：回生ブレーキ）
@@ -125,11 +125,11 @@ void pwmInit(void) {
  *     'H'      'L'   	逆転（反時計回り）
  *     'H'      'H'   	停止（ブレーキ）
  * 【PWM出力指示】
- *	前進		0 ～ +32767
- *	後退		0 ～ -32767
+ *	前進		0 ～ +65535
+ *	後退		0 ～ -65535
  *	※ 両輪とも、前進が正（+）、後退が負（-）をPWM指示値とする
  *----------------------------------------------------------------------*/
-void pwmOut(short L, short R) {
+void pwmOut(int L, int R) {
 	// モーター回転方向の指示値
 	// PIO2_0 ～PIO2_3 を 'L' に初期化
 	int dir = LPC_GPIO2->DATA & 0x0ff0;
@@ -170,15 +170,15 @@ void pwmOut(short L, short R) {
 	R = (R * PWM_GAIN_R) / PWM_GAIN_RATIO;
 
 	// 最小値、最大値で制限
-//	L = MIN(PWM_MAX, MAX(-PWM_MAX, L));
-//	R = MIN(PWM_MAX, MAX(-PWM_MAX, R));
+	L = MIN(PWM_MAX, MAX(-PWM_MAX, L));
+	R = MIN(PWM_MAX, MAX(-PWM_MAX, R));
 
 	// 15.8.7 Match Registers (TMR16B0MR0, TMR16B1MR0)
 	// モーターに出力値を設定
 	// MR0 = TC の場合： Duty 0%
 	// MR0 = TC + 1 の場合: Duty 100%
-	LPC_TMR16B0->MR0 = ~(ABS(R) * 2 + (R ? 1 : 0));
-	LPC_TMR16B1->MR0 = ~(ABS(L) * 2 + (L ? 1 : 0));
+	LPC_TMR16B0->MR0 = ~(ABS(R) + (R ? 1 : 0));
+	LPC_TMR16B1->MR0 = ~(ABS(L) + (L ? 1 : 0));
 }
 
 #ifdef	EXAMPLE
@@ -196,7 +196,7 @@ void pwmOut(short L, short R) {
  * 動作例1: 直進性を確認し、駆動系のゲインを調整する
  *----------------------------------------------------------------------*/
 void pwmExample1(void) {
-	unsigned short pwm, delta = PWM_MAX / 200;
+	int pwm, delta = PWM_MAX / 200;
 
 	while (1) {
 		// 前進
@@ -229,7 +229,7 @@ void pwmExample1(void) {
  * 動作例2: 前進 --> 右旋回 --> 左旋回 --> 後退
  *----------------------------------------------------------------------*/
 void pwmExample2(void) {
-	short pwm = PWM_MAX / 2; // デューティ50%で動作
+	int pwm = PWM_MAX / 2; // デューティ50%で動作
 
 	while (1) {
 		pwmOut(+pwm, +pwm); timerWait(1000); // 前進

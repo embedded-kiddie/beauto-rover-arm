@@ -34,8 +34,8 @@ int main(void) {
 	 *	1: 直進性を確認し、駆動系のゲインを調整する
 	 *	2: 前進 --> 右旋回 --> 左旋回 --> 後退
 	 *-----------------------------------------*/
-	extern void pmuExample(int exampleType);
-	pmuExample(1);
+	extern void pwmExample(int exampleType);
+	pwmExample(1);
 
 #elif	0
 	/*-----------------------------------------
