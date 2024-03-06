@@ -171,8 +171,14 @@ void pwmOut(int L, int R) {
 
 	// 15.8.7 Match Registers (TMR16B0MR0, TMR16B1MR0)
 	// モーターに出力値を設定
+	// TC = 0 ～ 65535
 	// MR0 = TC の場合： Duty 0%
 	// MR0 = TC + 1 の場合: Duty 100%
+	//            <----- MR0
+	//            +----+ H
+	//            |    |
+	// +----------+    + L
+	// <-- PWM Cycle -->
 	LPC_TMR16B0->MR0 = ~ABS(R) & 0xFFFF;
 	LPC_TMR16B1->MR0 = ~ABS(L) & 0xFFFF;
 }
