@@ -85,7 +85,7 @@ int main(void) {
 	 *	3: PD制御によるライントレース
 	 *-----------------------------------------*/
 	extern void traceRun(int runMode);
-	traceRun(4);
+	traceRun(3);
 
 #endif
 

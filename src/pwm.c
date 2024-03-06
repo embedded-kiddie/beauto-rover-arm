@@ -169,16 +169,12 @@ void pwmOut(int L, int R) {
 	L = (L * PWM_GAIN_L) / PWM_GAIN_RATIO;
 	R = (R * PWM_GAIN_R) / PWM_GAIN_RATIO;
 
-	// 最小値、最大値で制限
-	L = MIN(PWM_MAX, MAX(-PWM_MAX, L));
-	R = MIN(PWM_MAX, MAX(-PWM_MAX, R));
-
 	// 15.8.7 Match Registers (TMR16B0MR0, TMR16B1MR0)
 	// モーターに出力値を設定
 	// MR0 = TC の場合： Duty 0%
 	// MR0 = TC + 1 の場合: Duty 100%
-	LPC_TMR16B0->MR0 = ~(ABS(R) + (R ? 1 : 0));
-	LPC_TMR16B1->MR0 = ~(ABS(L) + (L ? 1 : 0));
+	LPC_TMR16B0->MR0 = ~ABS(R) & 0xFFFF;
+	LPC_TMR16B1->MR0 = ~ABS(L) & 0xFFFF;
 }
 
 #ifdef	EXAMPLE
