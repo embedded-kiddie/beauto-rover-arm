@@ -59,7 +59,7 @@ int sciWaitKey(void) {
 
 /*--------------------------------------------------------------------------
  * シリアル通信出力 - 書式指定付き出力
- * - ネイティブの printf() には待ち時間が入っていないので、本関数の使用を推奨する
+ * - ヌル文字を含めて64文字の制限があるため、printf() を使う方が良い
  *--------------------------------------------------------------------------*/
 int sciPrintf(const char* restrict fmt, ...) {
 	int len = 0;
@@ -227,11 +227,16 @@ int __sys_seek(int handle, int pos) {
 #if	SYSTEM_CALL
 
 int __sys_write(int iFileHandle, char *pcBuffer, int iLength) {
-	// 送信
-	SciStrTx((unsigned char*)pcBuffer, (unsigned char)iLength);
+	do {
+		int len = MIN(iLength, SCI_BUF_SIZE);
+		SciStrTx((unsigned char*)pcBuffer, (unsigned char)len);
 
-	// 次の送信まで間を空ける
-	delay(SCI_WAIT);
+		// 次の送信まで間を空ける
+		delay(SCI_WAIT);
+
+		pcBuffer += len;
+		iLength  -= len;
+	} while (iLength > 0);
 
 	return 0;
 }
@@ -281,7 +286,7 @@ void sciExample1(void) {
  *----------------------------------------------------------------------*/
 void sciExample2(void) {
 	double f = 0.0;
-	const char *txt = "0123456789012345678901234567890123456789012345678901234567890123456789\r\n";
+	const char *txt = "123456789-123456789-123456789-123456789-123456789-123456789-123456789\r\n";
 
 	CDC_SetLineCoding();
 	sciPrintf("%s%s", "\e[2J", "\e[0;0H"); // 画面クリア＋原点に移動
@@ -292,9 +297,9 @@ void sciExample2(void) {
 
 	printf("Circle ratio = %7.4lf\r\n", (double)3.1415926);
 	printf("Cyborg %03d is a Japanese famous animation.\r\n", 9);
-	printf(txt); // ヌル文字に関係なく64文字でカット
+	printf(txt); // 64文字でカットされない
 
-	printf("%sPlease input a number: ", "\r\n");
+	printf("Please input a number: ");
 	sciScanf("%8lf", &f); // scanf()は動作せず
 	printf("%sYour input is '%f'.", "\r\n", f);
 
