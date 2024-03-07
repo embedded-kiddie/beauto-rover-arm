@@ -29,30 +29,30 @@
 
 /*----------------------------------------------------------------------
  * 待ち時間の設定
- * 1[msec]に設定すると、921600bpsで送信失敗が発生する
+ * - 連続送出時、5[msec]の設定だと、受信側で取りこぼしが発生する
  *----------------------------------------------------------------------*/
 #define	SCI_WAIT	(2000UL * 10)		// [10msec]
 extern void delay	(uint32_t length);	// defined in usbhw.c
 
 /*----------------------------------------------------------------------
  * シリアル通信I/F - 初期化
+ * - Tera Term で 921600bps まで動作確認済み
  *----------------------------------------------------------------------*/
-void sciInit(void)
-{
+void sciInit(void) {
 	SciInit(); // defined in cdcuser.c
 }
 
 /*--------------------------------------------------------------------------
  * シリアル通信出力 - 書式指定付き出力
+ * - ネイティブの printf() には待ち時間が入っていないので、本関数の使用を推奨する
  *--------------------------------------------------------------------------*/
-int sciPrintf(const char* restrict fmt, ...)
-{
+int sciPrintf(const char* restrict fmt, ...) {
 	int len = 0;
 	/*static*/ char buf[SCI_BUF_SIZE];
 
 	va_list arg_ptr;
 	va_start(arg_ptr, fmt);
-	len = vsnprintf(buf, SCI_BUF_SIZE, fmt, arg_ptr); // ヌル文字を除く63文字でカット
+	len = vsnprintf(buf, SCI_BUF_SIZE, fmt, arg_ptr); // ヌル文字を含む64文字でカット
 	va_end(arg_ptr);
 
 	// 送信
