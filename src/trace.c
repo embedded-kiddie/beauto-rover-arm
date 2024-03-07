@@ -14,7 +14,7 @@
 #include "play.h"
 #include "trace.h"
 
-#define	TRACE_DEBUG		0
+#define	TRACE_DEBUG		1
 #if		TRACE_DEBUG
 #include <stdio.h>
 #include "sci.h"
@@ -151,25 +151,29 @@ static short calibrateIR(CalibrateIR_t *cal) {
 #if TRACE_DEBUG
 	// USBケーブルの接続し、通信の成立を確認する
 	while (!swClick()) { ledFlush(100); }
-	sciInit();		// 通信確立を確認し、
-	swStandby();	// スイッチを押したら出力開始
+	sciInit();
 
-	// 補正係数用パラメータを出力する
-	sciPrintf("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
-	sciPrintf("0,%d,%d,%d,%d,%d,%d,%d\r\n", offset, minL, maxL, cal->gainL, minR, maxR, cal->gainR);
-	sciPrintf("#No,L,R,L - R,L',R',L' - R'\r\n");
+	while (1) {
+		// スイッチを押したら出力開始
+		swStandby();
 
-	// キャリブレーション前後の値を出力する
-	for (i = 0; i < n; i++) {
-		// 原点オフセット平均値のみ、左右の正規化なし
-		L = IR[i].L - offset;
-		R = IR[i].R + offset;
-		sciPrintf("%d,%d,%d,%d,", i + 1, L, R, (short)(L - R));
+		// 補正係数用パラメータを出力する
+		sciPrintf("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
+		sciPrintf("0,%d,%d,%d,%d,%d,%d,%d\r\n", offset, minL, maxL, cal->gainL, minR, maxR, cal->gainR);
+		sciPrintf("#No,L,R,L - R,L',R',L' - R'\r\n");
 
-		// 左右の正規化あり
-		L = (IR[i].L - cal->offsetL) * cal->gainL / 100;
-		R = (IR[i].R - cal->offsetR) * cal->gainR / 100;
-		sciPrintf("%d,%d,%d\r\n", L, R, (short)(L - R));
+		// キャリブレーション前後の値を出力する
+		for (i = 0; i < n; i++) {
+			// 原点オフセット平均値のみ、左右の正規化なし
+			L = IR[i].L - offset;
+			R = IR[i].R + offset;
+			sciPrintf("%d,%d,%d,%d,", i + 1, L, R, (short)(L - R));
+
+			// 左右の正規化あり
+			L = (IR[i].L - cal->offsetL) * cal->gainL / 100;
+			R = (IR[i].R - cal->offsetR) * cal->gainR / 100;
+			sciPrintf("%d,%d,%d\r\n", L, R, (short)(L - R));
+		}
 	}
 #endif
 
@@ -295,8 +299,8 @@ static const PID_t G3 = {
 	50,				// Kp 比例項係数 (50～80)
 	0,				// Ki (N/A)
 	0,				// Kd 比例項係数 (6～8)
-	24000,			// 前進成分の制御量 (26000以上は曲がりきれない)
-	PWM_MAX			// 旋回成分の制御量
+	24000,			// 前進成分の制御量 (～26000)
+	PWM_MAX			// 旋回成分の制御量 (N/A)
 };
 #elif 0	// 2. P項の1/10を目安にD項を調整
 #define	ADJUST_FORWARD	0
@@ -305,16 +309,16 @@ static const PID_t G3 = {
 	0,				// Ki (N/A)
 	12,				// Kd 比例項係数 (6～8)
 	40000,			// 前進成分の制御量 (26000～40000)
-	PWM_MAX			// 旋回成分の制御量
+	PWM_MAX			// 旋回成分の制御量 (N/A)
 };
-#else // 3. 直線は速度維持、カーブで減速
+#else	// 3. 直線は速度維持、カーブで減速
 #define	ADJUST_FORWARD	1
 static const PID_t G3 = {
 	80,				// Kp 比例項係数 (50～80)
 	0,				// Ki (N/A)
 	12,				// Kd 比例項係数 (6～8)
-	53500,			// 前進成分の制御量 (26000～28000)
-	PWM_MAX			// 旋回成分の制御量
+	53500,			// 前進成分の制御量 (40000～54000)
+	PWM_MAX			// 旋回成分の制御量 (N/A)
 };
 #endif
 
@@ -349,7 +353,7 @@ static void traceRun3(void) {
 #if	ADJUST_FORWARD
 		F = G3.FORWARD - ABS(T);
 #else
-		F = G3.FORWARD;
+		F = G3.FORWARD; // 減速なし
 #endif
 
 		/*-----------------------------------------
