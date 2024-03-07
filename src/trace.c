@@ -14,7 +14,7 @@
 #include "play.h"
 #include "trace.h"
 
-#define	TRACE_DEBUG		1
+#define	TRACE_DEBUG		0
 #if		TRACE_DEBUG
 #include <stdio.h>
 #include "sci.h"
@@ -149,13 +149,13 @@ static short calibrateIR(CalibrateIR_t *cal) {
 	cal->gainR   = IR_RANGE * 100 / (maxR - minR);
 
 #if TRACE_DEBUG
-	// USBケーブルの接続し、通信の成立を確認する
+	// USBケーブルを接続し、通信の成立を確認する
 	while (!swClick()) { ledFlush(100); }
 	sciInit();
 
 	while (1) {
-		// スイッチを押したら出力開始
-		swStandby();
+		// リターンキーを受信したら出力開始
+		sciWaitKey();
 
 		// 補正係数用パラメータを出力する
 		sciPrintf("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");
