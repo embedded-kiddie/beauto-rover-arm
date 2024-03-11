@@ -155,7 +155,7 @@ static short calibrateIR(CalibrateIR_t *cal) {
 
 	while (1) {
 		// リターンキーを受信したら出力開始
-		sciWaitKey();
+		sciWaitKey('\r');
 
 		// 補正係数用パラメータを出力する
 		sciPrintf("#cal,offset,minL,maxL,gainL,minR,maxR,gainR\r\n");

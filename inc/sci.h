@@ -17,7 +17,7 @@
  * 関数のプロトタイプ宣言
  *----------------------------------------------------------------------*/
 extern void sciInit(void);
-extern int sciWaitKey(void);
+extern int sciWaitKey(unsigned char key);
 extern int sciPrintf(const char* restrict fmt, ...);
 extern int sciScanf(const char* restrict fmt, ...);
 extern int sciGets(char *buf, int len);

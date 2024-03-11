@@ -48,10 +48,10 @@ void sciInit(void) {
  *	sciInit();		// Tera Term の [未接続] が消えたら
  *	sciWaitKey();	// Tera Term から '\r'（リターンキー）を送出する
  *----------------------------------------------------------------------*/
-int sciWaitKey(void) {
+int sciWaitKey(unsigned char key) {
 	unsigned char data = 0;
 	while (1) {
-		if (SciByteRx(&data) && data == '\r') {
+		if (SciByteRx(&data) && data == key) {
 			return TRUE;
 		}
 	}
