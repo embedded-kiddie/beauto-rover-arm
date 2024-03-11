@@ -126,7 +126,7 @@ int sciGets(char *buf, int len) {
  * 	・型指定子は 'c'、's'、'd'、'x'、'f'、'ld'、'lx'、'lf' のみ可能
  *--------------------------------------------------------------------------*/
 int sciScanf(const char* restrict fmt, ...) {
-	int len = 1;
+	int len = 0;
 	char buf[SCI_BUF_SIZE];
 	const char *p = fmt;
 
@@ -142,30 +142,30 @@ int sciScanf(const char* restrict fmt, ...) {
 	switch (*p) {
 	  case 'd':
 	  case 'x':
-		sscanf(buf, fmt, va_arg(arg_ptr, int*));
+		len = sscanf(buf, fmt, va_arg(arg_ptr, int*));
 		break;
 	  case 'c':
 	  case 's':
-		sscanf(buf, fmt, va_arg(arg_ptr, char*));
+		len = sscanf(buf, fmt, va_arg(arg_ptr, char*));
 		break;
 	  case 'f':
-		sscanf(buf, fmt, va_arg(arg_ptr, float*));
+		len = sscanf(buf, fmt, va_arg(arg_ptr, float*));
 		break;
 	  case 'l':
 		switch(*(p+1)) {
 		  case 'd':
 		  case 'x':
-			sscanf(buf, fmt, va_arg(arg_ptr, long*));
+			len = sscanf(buf, fmt, va_arg(arg_ptr, long*));
 			break;
 		  case 'f':
-			sscanf(buf, fmt, va_arg(arg_ptr, double*));
+			len = sscanf(buf, fmt, va_arg(arg_ptr, double*));
 			break;
 		  default:
-			len = 0;
+			;
 		}
 		break;
 	  default:
-		len = 0;
+		;
 	}
 
 	va_end(arg_ptr);
